@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="../js/three.min.js"></script>
+    <script src="../js/OrbitControls.js"></script>
+    <script src="../js/Init.js"></script>
+    <script src="../js/RectAreaLightUniformsLib.js"></script>
+
+    <style>
+        #box{
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+    </style>
+
+</head>
+<body>
+<div class="ys-absolute-container" id="box" style="overflow: hidden"></div>
+<script>
+   let el=document.getElementById('box')
+    let app=new THREE.inithree(el,{
+        axes:true,
+    })
+    let scene=app.scene
+    let renderer=app.renderer
+    let camera=app.camera
+    let controls=app.controls
+
+
+    camera.position.set(50, 50, 50)
+    camera.lookAt(new THREE.Vector3(0, 0, 0))
+
+   //平面
+   const geoFloor = new THREE.BoxBufferGeometry( 2000, 0.1, 2000 );
+   const matStdFloor = new THREE.MeshStandardMaterial( { color: 0x808080, roughness: 0, metalness: 0 } );
+   const mshStdFloor = new THREE.Mesh( geoFloor, matStdFloor );
+   mshStdFloor.position.set(0,-1,0)
+   scene.add( mshStdFloor );
+
+   //方块
+   const cubeGeometry = new THREE.BoxGeometry(4, 4, 4);
+   const cubeMaterial = new THREE.MeshLambertMaterial({color: 'yellow'});
+   const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+   //设置方块位置
+   cube.position.set(-4,2,0)
+   scene.add(cube);
+
+   //球体
+   const matStdObjects = new THREE.MeshStandardMaterial( { color: 0xA00000, roughness: 0, metalness: 0 } );
+   const geoSphere = new THREE.SphereBufferGeometry( 4, 32, 32 );
+   const mshStdSphere = new THREE.Mesh( geoSphere, matStdObjects );
+   mshStdSphere.position.set( 5, 3, 5 );
+   // mshStdSphere.castShadow = true;
+   // mshStdSphere.receiveShadow = true;//也让其接受阴影
+   scene.add( mshStdSphere );
+
+
+   //环境光
+   const ambient = new THREE.AmbientLight( 0xffffff, 0.1 );
+   scene.add( ambient );
+
+   //点光源
+   const pointLight = new THREE.PointLight("white",0.5,1000);
+   pointLight.position.set(-20,20,-10)
+   scene.add(pointLight)
+   pointLight.castShadow = true;
+   //灯光辅助
+   // const sphereSize = 1
+   // const pointLightHelper = new THREE.PointLightHelper( pointLight, sphereSize )
+   // scene.add( pointLightHelper )
+
+   /**
+    * 面光源
+    * RectAreaLight( color, intensity,  width, height )
+    * */
+   const rectLight = new THREE.RectAreaLight( 0xffffff, 2,  10 , 10 );
+   rectLight.position.set( 5, 10, 0 );
+   rectLight.lookAt( 0, 0, 0 );
+   scene.add( rectLight )
+
+   const rectLightMesh = new THREE.Mesh( new THREE.PlaneBufferGeometry(), new THREE.MeshBasicMaterial( { side: THREE.BackSide } ) );
+   rectLightMesh.scale.x = rectLight.width;
+   rectLightMesh.scale.y = rectLight.height;
+   rectLight.add( rectLightMesh );
+
+   const rectLightMeshBack = new THREE.Mesh( new THREE.PlaneBufferGeometry(), new THREE.MeshBasicMaterial( { color: 0x080808 } ) );
+   rectLightMesh.add( rectLightMeshBack );
+
+
+   renderer.shadowMap.enabled = true;
+   //plane.receiveShadow = true;
+   mshStdFloor.receiveShadow = true;
+   cube.castShadow = true;
+   renderer.render(scene,camera)
+
+   const origin = new THREE.Vector3(0,0,0);
+
+
+    //动画、鼠标交互用animate更容易实现
+   function animate() {
+       const t = ( Date.now() / 2000 )
+       requestAnimationFrame( animate );
+       const r = 15.0;
+       const lx = r * Math.cos( t );
+       const lz = r * Math.sin( t );
+       const ly = 5.0 + 5.0 * Math.sin( t / 3.0 );
+       rectLight.position.set( lx, ly, lz );
+       rectLight.lookAt( origin ); //始终看原点
+       renderer.render( scene, camera );
+   }
+
+   animate()
+
+
+</script>
+
+</body>
+</html>

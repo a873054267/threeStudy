@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="../js/three.min.js"></script>
+    <script src="../js/OrbitControls.js"></script>
+    <script src="../js/Init.js"></script>
+    <script src="../js/Lensflare.js"></script>
+    <style>
+        #box{
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+    </style>
+
+</head>
+<body>
+<div class="ys-absolute-container" id="box" style="overflow: hidden"></div>
+<script>
+   let el=document.getElementById('box')
+    let app=new THREE.inithree(el,{
+        axes:true,
+    })
+    let scene=app.scene
+    let renderer=app.renderer
+    let camera=app.camera
+    let controls=app.controls
+
+
+   camera.position.set(400, -600, 100)
+   camera.lookAt(new THREE.Vector3(-400, 600, -100))
+
+   //球体
+   const sphereGeometry = new THREE.SphereGeometry(10,30,30);
+   const sphereMaterial = new THREE.MeshStandardMaterial({color:0xff00ff});
+   const sphere = new THREE.Mesh(sphereGeometry,sphereMaterial);
+   sphere.position.set(-20,20,0);
+   sphere.castShadow = true;
+   scene.add(sphere);
+
+   //立方体
+   const cubeGeometry = new THREE.CubeGeometry(10,10,10);
+   const cubeMaterial = new THREE.MeshLambertMaterial({color: 0x00ffff});
+   let cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+   cube.position.set(30,5,-5)
+   //告诉立方体需要投射阴影
+   scene.add(cube);
+
+   //底部平面
+   const planeGeometry = new THREE.PlaneGeometry(5000, 5000, 20, 20);
+   const planeMaterial = new THREE.MeshStandardMaterial({color: 0xaaaaaa});
+   let plane = new THREE.Mesh(planeGeometry, planeMaterial);
+   plane.rotation.x = -0.5 * Math.PI;
+   plane.position.y = -0;
+   //告诉底部平面需要接收阴影
+   plane.receiveShadow = true;
+
+   scene.add(plane);
+
+
+   //灯光和光晕
+   const ambientLight = new THREE.AmbientLight("#111111");
+   scene.add(ambientLight);
+   pointLight = new THREE.PointLight("#ffffff");
+   pointLight.position.set(-400, 600, -100);
+   //告诉平行光需要开启阴影投射
+   pointLight.castShadow = true;
+   scene.add(pointLight)
+
+   // 添加 lens flares
+   const textureLoader = new THREE.TextureLoader();
+   textureLoader.load("../images/lensflare0.png",textureFlare0=> {
+           textureLoader.load("../images/lensflare2.png", textureFlare2 => {
+               const flareColor = new THREE.Color(0xffffff);
+               flareColor.setHSL(0.55, 0.9, 1.0);
+
+              // var lensFlare =new THREE.LensFlare( texture, size, distance, blending, color )
+               //参数	描述
+             //  texture	(可选) THREE.Texture 纹理用来决定光晕的形状及样式
+              // size	(可选) 尺寸（以像素为单位） (如果将它指定为-1，将使用纹理本身的尺寸)
+             //  distance	(可选)从光源（0）到摄像机（1），将光晕放置在正确的位置
+            //   blending	(可选) 混合模式，光晕默认是THREE.NormalBlending
+              // color	(可选) 光晕的颜色
+               const lensFlare = new THREE.Lensflare();
+               lensFlare.addElement(new THREE.LensflareElement(textureFlare0, 500, 0.0, flareColor));
+               lensFlare.addElement(new THREE.LensflareElement(textureFlare2, 60, 0.6));
+               lensFlare.addElement(new THREE.LensflareElement(textureFlare2, 70, 0.7));
+               lensFlare.addElement(new THREE.LensflareElement(textureFlare2, 120, 0.9));
+               lensFlare.addElement(new THREE.LensflareElement(textureFlare2, 70, 1.0));
+               lensFlare.position.copy(pointLight.position);
+               scene.add(lensFlare)
+
+
+           })
+
+   })
+
+
+   function animate() {
+       controls.update()
+       renderer.render(scene, camera)
+       requestAnimationFrame(animate)
+   }
+
+   animate()
+
+
+</script>
+
+</body>
+</html>

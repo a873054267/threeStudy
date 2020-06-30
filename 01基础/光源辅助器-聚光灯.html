@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="../js/three.min.js"></script>
+    <script src="../js/OrbitControls.js"></script>
+    <script src="../js/Init.js"></script>
+    <style>
+        #box{
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+    </style>
+
+</head>
+<body>
+<div class="ys-absolute-container" id="box" style="overflow: hidden"></div>
+<script>
+   let el=document.getElementById('box')
+    let app=new THREE.inithree(el,{
+        axes:true,
+    })
+    let scene=app.scene
+    let renderer=app.renderer
+    let camera=app.camera
+    let controls=app.controls
+
+
+    camera.position.set(50, 50, 50)
+    camera.lookAt(new THREE.Vector3(0, 0, 0))
+
+
+   //平面
+   const planeGeometry = new THREE.PlaneGeometry(60, 20);
+   const planeMaterial = new THREE.MeshLambertMaterial({color: 0xffffff});
+   const plane = new THREE.Mesh(planeGeometry, planeMaterial);
+   //水平面旋转并且设置位置
+   plane.rotation.x = -0.5 * Math.PI;
+   plane.position.set(0,-1,0)
+   scene.add(plane);
+
+   //方块
+   const cubeGeometry = new THREE.BoxGeometry(4, 4, 4);
+   const cubeMaterial = new THREE.MeshLambertMaterial({color: 'yellow'});
+   const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+   //设置方块位置
+   cube.position.set(-4,2,0)
+   scene.add(cube);
+
+   //球体
+   const sphereGeometry = new THREE.SphereGeometry(4, 20, 20)
+   const sphereMaterial = new THREE.MeshLambertMaterial({color: 'yellow'})
+   const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial)
+   //设置球体位置
+   sphere.position.set( 20,2,2)
+   scene.add(sphere)
+
+
+
+
+
+   const ambientLight = new THREE.AmbientLight('rgba(255,0,0)',0.3) // obj 唯一 id
+   scene.add(ambientLight)
+
+
+
+   const spotLight = new THREE.SpotLight('#fff')
+   spotLight.position.set(30,25,-10)
+   scene.add(spotLight)
+   const  spotLightHelper = new THREE.SpotLightHelper( spotLight )
+   scene.add( spotLightHelper )
+
+    //使用光源辅助器的时候，不要使用lookat函数，会导致辅助器失效
+
+    //动画、鼠标交互用animate更容易实现
+   function animate() {
+       controls.update()
+       renderer.render(scene, camera)
+       requestAnimationFrame(animate)
+   }
+
+   animate()
+
+
+</script>
+
+</body>
+</html>

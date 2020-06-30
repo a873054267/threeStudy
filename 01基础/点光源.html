@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="../js/three.min.js"></script>
+    <script src="../js/OrbitControls.js"></script>
+    <script src="../js/Init.js"></script>
+    <style>
+        #box{
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+    </style>
+
+</head>
+<body>
+<div class="ys-absolute-container" id="box" style="overflow: hidden"></div>
+<script>
+   let el=document.getElementById('box')
+    let app=new THREE.inithree(el,{
+        axes:true,
+    })
+    let scene=app.scene
+    let renderer=app.renderer
+    let camera=app.camera
+    let controls=app.controls
+
+
+    camera.position.set(50, 50, 50)
+    camera.lookAt(new THREE.Vector3(0, 0, 0))
+
+
+   //方块
+   const cubeGeometry = new THREE.BoxGeometry(4, 4, 4);
+   const cubeMaterial = new THREE.MeshLambertMaterial({color: 'yellow'});
+   const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+   //设置方块位置
+   cube.position.set(-4,20,0)
+   scene.add(cube);
+
+   var ambientLight = new THREE.AmbientLight(0xff0000,1);
+   scene.add(ambientLight);
+   /**
+    PointLight( color, intensity, distance, decay )
+    color — 颜色的RBG数值。
+    intensity — 光强的数值。
+    distance -- 光强为0处到光源的距离，0表示无穷大。
+    decay -- 沿着光照距离的衰退量
+    */
+   const pointLight = new THREE.PointLight(0x00ff00,1,1000);
+
+   pointLight.position.set(-20,20,-10)
+   scene.add(pointLight)
+
+
+    //动画、鼠标交互用animate更容易实现
+   function animate() {
+       controls.update()
+       renderer.render(scene, camera)
+       requestAnimationFrame(animate)
+   }
+
+   animate()
+
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="../js/three.min.js"></script>
+    <script src="../js/OrbitControls.js"></script>
+    <script src="../js/Init.js"></script>
+    <style>
+        #box{
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+    </style>
+
+</head>
+<body>
+<div class="ys-absolute-container" id="box" style="overflow: hidden"></div>
+<script>
+   let el=document.getElementById('box')
+    let app=new THREE.inithree(el,{
+        axes:true,
+    })
+    let scene=app.scene
+    let renderer=app.renderer
+    let camera=app.camera
+    let controls=app.controls
+
+
+   function addGroundPlane(scene) {
+       // create the ground plane
+       var planeGeometry = new THREE.PlaneGeometry(60, 20, 120, 120);
+       var planeMaterial = new THREE.MeshPhongMaterial({
+           color: 0xffffff
+       });
+       var plane = new THREE.Mesh(planeGeometry, planeMaterial);
+       plane.receiveShadow = true;
+
+       // rotate and position the plane
+       plane.rotation.x = -0.5 * Math.PI;
+       plane.position.x = 15;
+       plane.position.y = 0;
+       plane.position.z = 0;
+
+       scene.add(plane);
+
+       return plane;
+   }
+
+
+    camera.position.set(50, 50, 50)
+    camera.lookAt(new THREE.Vector3(0, 0, 0))
+
+
+   let geometry= new THREE.BoxGeometry(2,2,2)
+   let material= new THREE.MeshBasicMaterial({
+       color: 0xffff00,
+   })
+    //mesh是three中管理的基本单元，所有的geometry都需要以此来包装
+   //所有的模型初始化后position都为0,0,0，如要设置位置，通过position属性
+   //普通材质不会对光源有任何反应
+   let  box = new THREE.Mesh(
+        geometry ,
+        material
+    );
+    box.position.set(0,10,0);
+    scene.add(box);
+   var ambientLight = new THREE.AmbientLight(0xff0000);
+   scene.add(ambientLight);
+
+   // 参数依次为color、强度、距离、角度，penumbra，decay
+   var spotLight = new THREE.SpotLight(0x00ff00);
+   spotLight.position.set(30,25,-10)
+   scene.add(spotLight);
+
+   const  spotLightHelper = new THREE.SpotLightHelper( spotLight )
+   scene.add( spotLightHelper )
+
+   var plane = addGroundPlane(scene);
+
+    //动画、鼠标交互用animate更容易实现
+   function animate() {
+       controls.update()
+       renderer.render(scene, camera)
+       requestAnimationFrame(animate)
+   }
+
+   animate()
+
+
+</script>
+
+</body>
+</html>
