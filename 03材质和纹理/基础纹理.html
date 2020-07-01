@@ -57,7 +57,7 @@
        plane.receiveShadow = true;
    }
    addPlane()
-   const X = -30
+
    function addOne(){
        const boxGeo = new THREE.BoxGeometry(5,5,5)
        new THREE.TextureLoader().load('../images/maiDou.jpeg',texture =>{
@@ -66,7 +66,7 @@
                map:texture
            })
            const box  = new THREE.Mesh(boxGeo,boxMaterial)
-           box.position.set(X,3,0)
+           box.position.set(0,0,0)
            scene.add(box)
            box.castShadow = true;
            renderer.shadowMap.enabled = true;
