@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="../js/three.min.js"></script>
+    <script src="../js/OrbitControls.js"></script>
+    <script src="../js/Init.js"></script>
+    <style>
+        #box{
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+    </style>
+
+</head>
+<body>
+<div class="ys-absolute-container" id="box" style="overflow: hidden"></div>
+<script>
+   let el=document.getElementById('box')
+    let app=new THREE.inithree(el,{
+        axes:true,
+    })
+    let scene=app.scene
+    let renderer=app.renderer
+    let camera=app.camera
+    let controls=app.controls
+
+
+    camera.position.set(50, 50, 50)
+    camera.lookAt(new THREE.Vector3(0, 0, 0))
+
+
+   //坐标轴辅助
+   var axes = new THREE.AxesHelper(10); //红x 绿y 蓝z
+   scene.add(axes);
+
+   //通过SpotLight创建一个光源
+   const spotLight = new THREE.SpotLight(0xffffff);
+   //从-40,60,-10这个三维坐标处照射我们的场景
+   spotLight.position.set(-40, 60, -10);
+   //添加光源到场景
+   scene.add(spotLight);
+   //添加环境光
+   var ambientLight = new THREE.AmbientLight("#FFB6C1", 1);
+   scene.add(ambientLight);
+
+   var geometry= new THREE.BoxGeometry(2,2,2)
+   //geometry.faceVertexUvs 可以查看面纹理坐标的个数--也就是三角形的个数
+   window.geometry=geometry
+   let v=`  uniform float time;
+      varying vec2 vUv;
+      void main()
+      {
+      vec3 posChanged = position; //默认为(geometry传入的坐标)
+
+       //默认的坐标要在前面乘模型视图矩阵和投影矩阵才会正常显示
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);
+      }`
+   let f=`precision highp float;
+      uniform float time;
+      uniform vec2 resolution;
+      varying vec2 vUv;
+      void main(void)
+      {
+      vec2 uv = ( gl_FragCoord.xy / resolution.xy );
+        vec3 col = 0.5 + 0.5*cos(uv.xyx+vec3(0,2,4)); //由于resolution太大，导致没有效果
+        // Output to screen
+         gl_FragColor = vec4(col,1.0);
+      }
+      `
+
+
+   var uniforms = {
+       resolution: {
+           type: "v2",
+           value: new THREE.Vector2()
+       }
+   };
+
+   uniforms.resolution.value.x = window.innerWidth;
+   uniforms.resolution.value.y = window.innerHeight;
+   let mat=[]
+
+   var meshMaterial
+   meshMaterial= new THREE.ShaderMaterial({
+       uniforms: uniforms,
+       vertexShader: v,
+       fragmentShader: f,
+       transparent: true,
+       side:THREE.DoubleSide,//两面可见
+
+   });
+   mat.push(meshMaterial)
+   mat.push(meshMaterial)
+   mat.push(meshMaterial)
+   mat.push(meshMaterial)
+   mat.push(meshMaterial)
+   mat.push(meshMaterial)
+   var box = new THREE.Mesh(
+       geometry,
+       mat,//当mat为矩阵的时候，会索引设置geometry的材质，如果一个，则全部的材质都为同一个
+       //meshMaterial
+   );
+
+   scene.add(box)
+
+
+
+   function animate() {
+       controls.update()
+
+       renderer.render(scene, camera)
+       requestAnimationFrame(animate)
+   }
+
+   animate()
+
+
+</script>
+
+</body>
+</html>

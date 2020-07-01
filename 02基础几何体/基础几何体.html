@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="../js/three.min.js"></script>
+    <script src="../js/OrbitControls.js"></script>
+    <script src="../js/Init.js"></script>
+    <style>
+        #box{
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+    </style>
+
+</head>
+<body>
+<div class="ys-absolute-container" id="box" style="overflow: hidden"></div>
+<script>
+   let el=document.getElementById('box')
+    let app=new THREE.inithree(el,{
+        axes:true,
+    })
+    let scene=app.scene
+    let renderer=app.renderer
+    let camera=app.camera
+    let controls=app.controls
+
+
+    camera.position.set(50, 50, 50)
+    camera.lookAt(new THREE.Vector3(0, 0, 0))
+
+
+   //方块
+function addcube() {
+    const cubeGeometry = new THREE.BoxGeometry(4, 4, 4);
+    const cubeMaterial = new THREE.MeshLambertMaterial({color: 'yellow'});
+    const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+    cube.position.set(-4,20,0)
+    scene.add(cube);
+
+}
+
+   //平面
+function addPlane() {
+    const planeGeometry = new THREE.PlaneGeometry(150, 150);
+    const planeMaterial = new THREE.MeshLambertMaterial({color: 0xffffff});
+    const plane = new THREE.Mesh(planeGeometry, planeMaterial);
+    //水平面旋转并且设置位置
+    plane.rotation.x = -0.5 * Math.PI;
+    plane.position.set(0,0,0)
+    scene.add(plane);
+
+
+}
+
+   /* 添加一个点 */
+   const addPoint = ()=>{
+       const point1 = new THREE.Vector3(1,1,0); //在Three.js中用一个向量来表示点;或者这么写：
+       const point2 = new THREE.Vector3();
+       point2.set(10,60,100);
+
+       /*点是无大小不可见的 在three中需要用对象来显示出来
+        创建一个几何模型（Geometry）,并添加点*/
+       const geometry = new THREE.Geometry(); //这是所有几何模型的基类
+       geometry.vertices.push(point1,point2); // vertices 表示顶点
+       const material = new THREE.PointsMaterial({    // 使用 PointsMaterial, 记得加上size属性，用来设置点的大小
+           color: 'red',
+           size: 4
+       })
+
+       const pointEl = new THREE.Points(geometry, material);//点云 以前叫pointCloud
+       scene.add(pointEl)
+
+       return pointEl
+   }
+
+
+   /* 添加一条线 线由点成*/
+   const addLine = () =>{
+       const p1 = new THREE.Vector3(1,1,0);
+       const p2 = new THREE.Vector3(10,60,100 );
+       const geometry = new THREE.Geometry();//创建一个几何
+       const material = new THREE.LineBasicMaterial( { //实线
+           //color:'red',//线色
+           vertexColors: true,//使用顶点渐变着色
+           linewidth:1 //window下无效
+       } );
+
+       geometry.vertices.push(p1,p2);
+       geometry.colors.push( new THREE.Color( '#9cff1c' ), new THREE.Color( '#ff1018' ) );
+
+       const line = new THREE.Line( geometry, material);
+       // line.computeLineDistances(); // 当为虚线时 必须调用，否则不会有虚线效果
+       scene.add(line);
+
+       return line
+   }
+
+   const addDashLine = () =>{
+       const p1 = new THREE.Vector3(1,1,0);
+       const p2 = new THREE.Vector3(-10,60,-100 );
+       const geometry = new THREE.Geometry();//创建一个几何
+
+       const  material2 = new THREE.LineDashedMaterial({ //虚线  需要调用 line.computeLineDistances()
+           // vertexColors: true,
+           color: 'red',
+           dashSize: 0.6,
+           gapSize: 0.2,
+           scale: 0.1 // 比例越大，虚线越密；反之，虚线越疏
+       })
+       geometry.vertices.push(p1,p2);
+       geometry.colors.push( new THREE.Color( '#9cff1c' ), new THREE.Color( '#ff1018' ) );
+
+       const line = new THREE.Line( geometry, material2);
+        line.computeLineDistances(); // 当为虚线时 必须调用，否则不会有虚线效果
+       scene.add(line);
+
+       return line
+   }
+
+
+   /* 添加一个圆 */
+   const addCircle = ()=>{
+       const geometry = new THREE.CircleGeometry( 5, 32 ); // 半径 / 分割面数量(三角形) ,实际上可以通过此来创建一个正多边形 改为4就成一个平面了。
+       const material = new THREE.MeshBasicMaterial( { color: 'red',side:THREE.DoubleSide } );
+       const circle = new THREE.Mesh( geometry, material );
+       circle.position.set(-60,5,5)
+       scene.add( circle );
+
+       return circle
+   }
+
+   /*添加 球体 */
+   function addBall() {
+       //球体
+       const sphereGeometry = new THREE.SphereGeometry(4, 20, 20)
+       const sphereMaterial = new THREE.MeshLambertMaterial({color: 'red'})
+       const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial)
+       sphere.position.set( 20,4,2)
+       sphere.name ='sphere'
+       scene.add(sphere)
+       sphere.castShadow = true
+       return sphere
+   }
+
+   /* 创建一个椎体 */
+   const addCone = () =>{
+       const geometry = new THREE.ConeGeometry( 5, 20, 6 );//半径、高度、切割数
+       const material = new THREE.MeshBasicMaterial( {color: 'red'} );
+       const cone = new THREE.Mesh( geometry, material );
+       cone.position.set(-50,10,5)
+       cone.castShadow = true;
+       scene.add( cone );
+       return cone
+   }
+   addCone()
+   /* 创建一个柱体 */
+   const addCylinder = () =>{
+       const geometry = new THREE.CylinderGeometry( 5, 5, 20, 6 );
+       const material = new THREE.MeshBasicMaterial( {color: 'red'} );
+       const cylinder = new THREE.Mesh( geometry, material );
+       cylinder.position.set(-30,10,5)
+       cylinder.castShadow = true;
+       scene.add( cylinder );
+   }
+   addCylinder()
+   /* 画个圆墙*/
+   function addWall() {
+       const  geometry = new THREE.CylinderGeometry( 100, 100, 20, 64 );
+       const cylinder = new THREE.Mesh( geometry, [
+           new THREE.MeshBasicMaterial( {color: 0xffff00,side:THREE.DoubleSide} ),
+           new THREE.MeshBasicMaterial( {transparent:true,opacity:0} ),
+           new THREE.MeshBasicMaterial( {color: 'black',transparent:true,opacity:0} )
+       ]);
+       scene.add(cylinder)
+       return cylinder
+   }
+   addWall()
+
+   /* 单边多边形 / 面 */
+   const addPolygon = () =>{
+
+       const rectShape = new THREE.Shape();
+       rectShape.moveTo( 0,0,0);
+       rectShape.lineTo( 5, 20,0);
+       rectShape.lineTo( 30, 30,0);
+       rectShape.lineTo( 20, 5,0);
+       rectShape.lineTo( 0, 0,0);
+
+       const rectGeom = new THREE.ShapeGeometry( rectShape );
+       const rectMesh = new THREE.Mesh( rectGeom, new THREE.MeshBasicMaterial( { color: 0xff0000 } ) ) ;
+
+       rectMesh.position.set(5,0,-10)
+       scene.add( rectMesh );
+   }
+   addPolygon()
+   const sphere = addBall()
+
+
+   let circle=addCircle()
+   addLine()
+   addDashLine()
+   addcube()
+   addPlane()
+   addPoint()
+
+
+   var ambientLight = new THREE.AmbientLight(0xffffff,1);
+   scene.add(ambientLight);
+   /**
+    PointLight( color, intensity, distance, decay )
+    color — 颜色的RBG数值。
+    intensity — 光强的数值。
+    distance -- 光强为0处到光源的距离，0表示无穷大。
+    decay -- 沿着光照距离的衰退量
+    */
+   const pointLight = new THREE.PointLight(0x00ff00,1,1000);
+
+   pointLight.position.set(-20,20,-10)
+   scene.add(pointLight)
+
+   //告诉渲染器，我们需要阴影映射
+   renderer.shadowMap.enabled = true;
+   //平面是接受阴影
+   //需要给光源同样设置具有阴影
+   pointLight.castShadow = true;
+
+
+
+
+
+   let circle_number = 0.001
+    //动画、鼠标交互用animate更容易实现
+   function animate() {
+       controls.update()
+       circle_number +=0.01
+       circle.rotation.y =  circle_number  * Math.PI
+       renderer.render(scene, camera)
+       requestAnimationFrame(animate)
+   }
+
+   animate()
+
+
+</script>
+
+</body>
+</html>

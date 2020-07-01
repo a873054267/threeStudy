@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="../js/three.min.js"></script>
+    <script src="../js/OrbitControls.js"></script>
+    <script src="../js/Init.js"></script>
+    <style>
+        #box{
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+    </style>
+
+</head>
+<body>
+<div class="ys-absolute-container" id="box" style="overflow: hidden"></div>
+<script>
+   let el=document.getElementById('box')
+    let app=new THREE.inithree(el,{
+        axes:true,
+    })
+    let scene=app.scene
+    let renderer=app.renderer
+    let camera=app.camera
+    let controls=app.controls
+
+
+    camera.position.set(50, 50, 50)
+    camera.lookAt(new THREE.Vector3(0, 0, 0))
+
+
+
+   function addGroundPlane() {
+       // create the ground plane
+       var planeGeometry = new THREE.PlaneGeometry(60, 20, 120, 120);
+       var planeMaterial = new THREE.MeshPhongMaterial({
+           color: 0xffffff
+       });
+       var plane = new THREE.Mesh(planeGeometry, planeMaterial);
+       plane.receiveShadow = true;
+       // rotate and position the plane
+       plane.rotation.x = -0.5 * Math.PI;
+       plane.position.x = 15;
+       plane.position.y = 0;
+       plane.position.z = 0;
+       scene.add(plane);
+       return plane;
+   }
+
+   addGroundPlane()
+
+   var ambientLight = new THREE.AmbientLight(0xffffff,0.9);
+   scene.add(ambientLight);
+
+   // 参数依次为color、强度、距离、角度，penumbra，decay
+   var spotLight = new THREE.SpotLight(0x00ff00);
+   spotLight.position.set(30,25,-10)
+   scene.add(spotLight);
+   // const  spotLightHelper = new THREE.SpotLightHelper( spotLight )
+   // scene.add( spotLightHelper )
+
+   const loader = new THREE.FontLoader();
+   loader.load( '../font/gentilis_bold.typeface.json', function ( font ) {
+       const geometry = new THREE.TextGeometry( 'Hello', { //中文字体不支持 请下载支持中文的字体
+           font: font,
+           size: 12,
+           height:1
+       });
+       const text1 = new THREE.Mesh(geometry,new THREE.MeshPhongMaterial({
+           color: 'red',
+           specular: 0x009900,
+           shininess: 30,
+       }))
+       text1.position.y = 10;
+       scene.add(text1);
+       text1.castShadow = true
+       renderer.render(scene,camera)
+   });
+   /**
+    *
+    * 使用精灵创建二维文字
+    */
+   function makeTextSprite( text, options )
+   {
+       if ( options === undefined ) options = {};
+
+       const fontsize = options.fontSize || 18
+           ,thickness = options.thickness || 4
+           ,color = options.color || '#000'
+           , fontface = options.fontFace || "Arial";
+
+       const canvas = document.createElement('canvas');
+       const context = canvas.getContext('2d');
+       context.lineWidth = thickness;
+       context.fillStyle = color;
+       context.font = "Bold " + fontsize + "px " + fontface;
+       context.fillText( text,thickness, fontsize + thickness);
+
+       const texture = new THREE.Texture(canvas)
+       texture.needsUpdate = true
+
+       const spriteMaterial = new THREE.SpriteMaterial( { map: texture} );
+       const sprite = new THREE.Sprite( spriteMaterial );
+       sprite.scale.set(0.5 * fontsize, 0.25 * fontsize, 0.75 * fontsize);
+       return sprite;
+   }
+
+   const text = makeTextSprite( "测试文字", { fontSize: 50,color:'red' } );
+   text.position.set(-40,10,-40);
+   scene.add(text);
+
+   //绕点飞行
+   const O = [0,0],R = 80
+   let  a = 0,x  =  O[0] +  R   *   Math.cos(a),
+       z = O[1] +  R * Math.sin(a)
+
+
+
+   function animate() {
+       controls.update()
+       a = a + 0.01
+       x =  O[0] + R * Math.cos(a)
+       z =  O[1] + R * Math.sin(a)
+       camera.position.set(x,30,z)
+       camera.lookAt(new THREE.Vector3(0,0,0))
+
+       renderer.render(scene, camera)
+       requestAnimationFrame(animate)
+   }
+
+   animate()
+
+
+</script>
+
+</body>
+</html>

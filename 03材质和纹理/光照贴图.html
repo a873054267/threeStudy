@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="../js/three.min.js"></script>
+    <script src="../js/OrbitControls.js"></script>
+    <script src="../js/Init.js"></script>
+    <style>
+        #box{
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+    </style>
+
+</head>
+<body>
+<div class="ys-absolute-container" id="box" style="overflow: hidden"></div>
+<script>
+   let el=document.getElementById('box')
+    let app=new THREE.inithree(el,{
+        axes:true,
+    })
+    let scene=app.scene
+    let renderer=app.renderer
+    let camera=app.camera
+    let controls=app.controls
+
+
+    camera.position.set(50, 50, 50)
+    camera.lookAt(new THREE.Vector3(0, 0, 0))
+
+
+   function addLight(){
+       const light = new THREE.SpotLight();
+       light.position.set(0, 30, 30);
+       light.intensity = 2;
+       scene.add(light);
+       light.castShadow = true
+   }
+   addLight()
+
+   const loader = new THREE.TextureLoader()
+   /* ********** 演示 **/
+   /**
+    * 光照贴图
+    * */
+   //添加平面
+   function addPlane(){
+       loader.load("../images/floor-bg.jpg",texture=>{
+           loader.load("../images/box_sun_shadow.png",shadowTexture =>{
+               //平面
+               const planeGeometry = new THREE.PlaneGeometry(120, 120);
+               const planeMaterial = new THREE.MeshLambertMaterial({
+                   map: texture,
+                   lightMap:shadowTexture
+               });
+               const plane = new THREE.Mesh(planeGeometry, planeMaterial);
+               //水平面旋转并且设置位置
+               plane.rotation.x = -0.5 * Math.PI;
+               plane.position.set(0,-1,0)
+               scene.add(plane);
+               plane.receiveShadow = true;
+               planeGeometry.faceVertexUvs[1] = planeGeometry.faceVertexUvs[0];
+           })
+       })
+   }
+   addPlane()
+   loader.load("../images/stone.jpg",texture =>{
+       const boxGeo = new THREE.BoxGeometry(12,12,12)
+       const material = new THREE.MeshStandardMaterial({
+           map:texture,
+       });
+       const box = new THREE.Mesh(boxGeo,material)
+       box.position.set(-15,6,0)
+       scene.add(box)
+       box.castShadow = true
+       renderer.render(scene, camera)
+   })
+
+   function animate() {
+       controls.update()
+
+       renderer.render(scene, camera)
+       requestAnimationFrame(animate)
+   }
+
+   animate()
+
+
+</script>
+
+</body>
+</html>

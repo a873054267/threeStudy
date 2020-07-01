@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="../js/three.min.js"></script>
+    <script src="../js/OrbitControls.js"></script>
+    <script src="../js/Init.js"></script>
+    <style>
+        #box{
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+    </style>
+
+</head>
+<body>
+<div class="ys-absolute-container" id="box" style="overflow: hidden"></div>
+<script>
+   let el=document.getElementById('box')
+    let app=new THREE.inithree(el,{
+        axes:true,
+    })
+    let scene=app.scene
+    let renderer=app.renderer
+    let camera=app.camera
+    let controls=app.controls
+
+
+    camera.position.set(50, 50, 50)
+    camera.lookAt(new THREE.Vector3(0, 0, 0))
+
+
+   let geometry = new THREE.BoxGeometry( 2, 2, 2);
+
+
+
+   for(let i = 0;i<geometry.faces.length;i++){
+       let hex = Math.random() * 0xffffff;
+       geometry.faces[ i ].color.setHex( hex );
+   }
+
+   let material = new THREE.MeshBasicMaterial( {
+       vertexColors: THREE.FaceColors
+   } );
+
+   let mesh=new THREE.Mesh(geometry,material);
+
+
+
+
+   scene.add(mesh);
+
+
+
+
+   function animate() {
+       controls.update()
+
+       renderer.render(scene, camera)
+       requestAnimationFrame(animate)
+   }
+
+   animate()
+
+
+</script>
+
+</body>
+</html>

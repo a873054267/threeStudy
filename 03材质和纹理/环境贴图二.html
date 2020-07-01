@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="../js/three.min.js"></script>
+    <script src="../js/OrbitControls.js"></script>
+    <script src="../js/Init.js"></script>
+    <style>
+        #box{
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+    </style>
+
+</head>
+<body>
+<div class="ys-absolute-container" id="box" style="overflow: hidden"></div>
+<script>
+   let el=document.getElementById('box')
+    let app=new THREE.inithree(el,{
+        axes:true,
+    })
+    let scene=app.scene
+    let renderer=app.renderer
+    let camera=app.camera
+    let controls=app.controls
+
+
+    camera.position.set(50, 50, 50)
+    camera.lookAt(new THREE.Vector3(0, 0, 0))
+
+
+   function addLight(){
+       const light = new THREE.SpotLight();
+       light.position.set(0, 30, 30);
+       light.intensity = 2;
+       scene.add(light);
+       light.castShadow = true
+   }
+   addLight()
+
+   /**
+    * 环境贴图
+    * 本例使用 scene全景图 CubeTextureLoader加载六个方向图片
+    * */
+   const texture  = new THREE.CubeTextureLoader()
+       .setPath( '../images/' )
+       .load( [
+           'px.jpg',//右(-1,0,0)
+           'nx.jpg',//左(1,0,0)
+           'py.jpg',//上(0,1,0)
+           'ny.jpg',//下(0,-1,0)
+           'pz.jpg',//前(0,0,1)
+           'nz.jpg'//后(0,0,-1)
+       ] );
+   texture.format = THREE.RGBFormat;
+   texture.mapping = THREE.CubeReflectionMapping;
+   const shader = THREE.ShaderLib["cube"];
+   // shader.uniforms["tCube"].value = texture; //老版本
+   const material = new THREE.ShaderMaterial({
+       fragmentShader: shader.fragmentShader,
+       vertexShader: shader.vertexShader,
+       uniforms: shader.uniforms,
+       // depthWrite: false,
+       side: THREE.DoubleSide
+   });
+   material.envMap = texture; //新版本
+
+
+   const skyBox = new THREE.Mesh(new THREE.BoxGeometry(800, 800, 800), material);
+   scene.add(skyBox)
+
+   //盒子
+   function addBall(){
+       const geometry =  new THREE.BoxGeometry( 10, 10, 10 );
+       const material = new THREE.MeshBasicMaterial( { envMap: texture, side: THREE.DoubleSide } );
+       const ball = new THREE.Mesh(geometry,material)
+       ball.position.set(0,30,0)
+       scene.add(ball)
+   }
+   addBall()
+
+
+   camera.position.set(30,30,30)
+   controls.target.set(0,30,0)
+
+   function animate() {
+       controls.update()
+
+       renderer.render(scene, camera)
+       requestAnimationFrame(animate)
+   }
+
+   animate()
+
+
+</script>
+
+</body>
+</html>

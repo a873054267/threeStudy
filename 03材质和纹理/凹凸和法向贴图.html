@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="../js/three.min.js"></script>
+    <script src="../js/OrbitControls.js"></script>
+    <script src="../js/Init.js"></script>
+    <style>
+        #box{
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+    </style>
+
+</head>
+<body>
+<div class="ys-absolute-container" id="box" style="overflow: hidden"></div>
+<script>
+   let el=document.getElementById('box')
+    let app=new THREE.inithree(el,{
+        axes:true,
+    })
+    let scene=app.scene
+    let renderer=app.renderer
+    let camera=app.camera
+    let controls=app.controls
+
+
+    camera.position.set(50, 50, 50)
+    camera.lookAt(new THREE.Vector3(0, 0, 0))
+
+
+   //添加灯光
+   function addLight(){
+       const ambientLight = new THREE.AmbientLight('#fff',0.1)
+       scene.add(ambientLight)
+
+       const light = new THREE.SpotLight();
+       light.position.set(0, 30, 30);
+       light.intensity = 1;
+       scene.add(light);
+       light.castShadow = true
+   }
+   addLight()
+
+   //添加平面
+   function addPlane(){
+       //平面
+       const planeGeometry = new THREE.PlaneGeometry(60, 20);
+       const planeMaterial = new THREE.MeshLambertMaterial({color: 0xffffff});
+       const plane = new THREE.Mesh(planeGeometry, planeMaterial);
+       //水平面旋转并且设置位置
+       plane.rotation.x = -0.5 * Math.PI;
+       plane.position.set(0,-1,0)
+       scene.add(plane);
+       plane.receiveShadow = true;
+   }
+   addPlane()
+   /* ********** 演示 **/
+   /**
+    * 凹凸贴图可以使纹理也有厚度，看起来更立体。凹凸贴图一般使用一张灰度图，设置成材料的bumpMap属性
+    * */
+   const loader = new THREE.TextureLoader()
+   loader.load("../images/stone.jpg",texture =>{
+       loader.load("../images/stone-bump.jpg",bumpTexture =>{
+           const boxGeo = new THREE.BoxGeometry(20,20,2)
+           const material = new THREE.MeshStandardMaterial({map:texture,bumpMap:bumpTexture,bumpScale:1});
+           const box = new THREE.Mesh(boxGeo,material)
+           box.position.set(-15,10,0)
+           scene.add(box)
+           box.castShadow = true
+
+
+       })
+   })
+   /**
+    * 法向贴图使用一张法向图来表示纹理图片某个点的法向量。即用一张图片保存另一张图片的法向量信息，
+    * 然后再在threejs中将这两个图片的信息合在一起，就形成了一个细节丰富的立体纹理
+    * 设置材质的 normalMap 属性
+    *
+    * */
+   loader.load("../images/normal2.jpg",texture =>{
+       loader.load("../images/normal1.jpg",bumpTexture =>{
+           const boxGeo = new THREE.BoxGeometry(20,20,2)
+           const material = new THREE.MeshStandardMaterial({map:texture,normalMap:bumpTexture});
+           material.normalScale.set(1, 1)
+           const box = new THREE.Mesh(boxGeo,material)
+           box.position.set(15,10,0)
+           scene.add(box)
+           box.castShadow = true
+
+
+       })
+   })
+
+   /* ******** 演示 **/
+   renderer.shadowMap.enabled = true;
+   renderer.render(scene, camera)
+
+   function animate() {
+       controls.update()
+
+       renderer.render(scene, camera)
+       requestAnimationFrame(animate)
+   }
+
+   animate()
+
+
+</script>
+
+</body>
+</html>

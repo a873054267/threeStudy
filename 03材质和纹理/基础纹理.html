@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="../js/three.min.js"></script>
+    <script src="../js/OrbitControls.js"></script>
+    <script src="../js/Init.js"></script>
+    <style>
+        #box{
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+    </style>
+
+</head>
+<body>
+<div class="ys-absolute-container" id="box" style="overflow: hidden"></div>
+<video id="video" muted="" autoplay="" loop="" crossorigin="" controls="" style="position: absolute;z-index: -1">
+    <source src="../images/2.mp4" type="video/mp4">
+    Your browser does not support the <code>video</code> element.
+</video>
+<script>
+   let el=document.getElementById('box')
+    let app=new THREE.inithree(el,{
+        axes:true,
+    })
+    let scene=app.scene
+    let renderer=app.renderer
+    let camera=app.camera
+    let controls=app.controls
+
+
+    camera.position.set(50, 50, 50)
+    camera.lookAt(new THREE.Vector3(0, 0, 0))
+   var ambientLight = new THREE.AmbientLight(0xffffff,0.9);
+   scene.add(ambientLight);
+
+   // 参数依次为color、强度、距离、角度，penumbra，decay
+   var spotLight = new THREE.SpotLight(0x00ff00);
+   spotLight.position.set(30,25,-10)
+   scene.add(spotLight);
+   //添加平面
+   function addPlane(){
+       //平面
+       const planeGeometry = new THREE.PlaneGeometry(60, 20);
+       const planeMaterial = new THREE.MeshLambertMaterial({color: 0xffffff});
+       const plane = new THREE.Mesh(planeGeometry, planeMaterial);
+       //水平面旋转并且设置位置
+       plane.rotation.x = -0.5 * Math.PI;
+       plane.position.set(0,-1,0)
+       plane.position.set(0,0,0)
+       scene.add(plane);
+       plane.receiveShadow = true;
+   }
+   addPlane()
+   const X = -30
+   function addOne(){
+       const boxGeo = new THREE.BoxGeometry(5,5,5)
+       new THREE.TextureLoader().load('../images/maiDou.jpeg',texture =>{
+           const boxMaterial = new THREE.MeshLambertMaterial({
+               // color:'red', 可以看到颜色也是可以作用的。
+               map:texture
+           })
+           const box  = new THREE.Mesh(boxGeo,boxMaterial)
+           box.position.set(X,3,0)
+           scene.add(box)
+           box.castShadow = true;
+           renderer.shadowMap.enabled = true;
+           renderer.render(scene, camera)
+       })
+   }
+   addOne()
+    //实际上就是根据材质数组取自动赋值对应的材质
+   function addOne2(){
+       const boxGeo = new THREE.BoxGeometry(5,5,5)
+       const loader = new THREE.TextureLoader()
+       const boxMaterials = []
+       function loadTexture(url,callback) {
+           loader.load(url,texture =>{
+               boxMaterials.push(new THREE.MeshLambertMaterial({
+                   map:texture
+               }))
+               callback()
+           })
+       }
+       let url
+
+       for(let i=0;i<6;i++){
+           url='../images/'+i+'.png'
+           loadTexture(url,()=>{
+               if(i==5){
+                   const box  = new THREE.Mesh(boxGeo,boxMaterials) //右，左，上，下，前，后
+                   box.position.set(X + 10,3,0)
+                   scene.add(box)
+                   box.castShadow = true;
+                   renderer.render(scene, camera)
+               }
+
+           })
+
+       }
+   }
+   addOne2()
+   //指定纹理的重复方式
+   function addOne3(){
+       const boxGeo = new THREE.BoxGeometry(5,5,5)
+       new THREE.TextureLoader().load('../images/maiDou.jpeg',texture =>{
+           const material = new THREE.MeshLambertMaterial({
+               map:texture
+           })
+           texture.wrapS = texture.wrapT = THREE.RepeatWrapping; //每个都重复
+           /*
+           wrapS是x轴方向的行为，wrapT是y轴方向的行为
+           取值分别是：RepeatWrapping:允许重复自己，ClampToEdgeWrapping:默认值,纹理的边缘会被拉伸
+           设置THREE.RepeatWrapping可以通过下面的方式设置 cube.material.map.repeat.set(repeatX, repeatY);
+           设置THREE.ClampToEdgeWrapping需要 cube.material.map.needsUpdate = true;
+            * */
+           texture.repeat.set(3, 3); // 每个面 重复 3 * 3
+           const box  = new THREE.Mesh(boxGeo,material) //右，左，上，下，前，后
+           box.position.set(X + 20,3,0)
+           scene.add(box)
+           box.castShadow = true;
+       })
+   }
+   addOne3()
+
+ //贴图
+   function addOne4(){
+       new THREE.TextureLoader().load('../images/earth.jpg',texture =>{
+           const ballGeo = new THREE.SphereGeometry(8, 20, 20)
+           const material = new THREE.MeshBasicMaterial( {
+               map:texture
+           });
+           const ball = new THREE.Mesh( ballGeo, material );
+           ball.position.set(0,14,0)
+           scene.add( ball );
+           ball.castShadow = true
+       })
+   }
+   addOne4()
+
+   /**
+    * canvasDom
+    *
+    * 纹理canvas运动的时候 需要每次都设置 canvasTexture.needsUpdate = true;
+    * */
+   /* 绘制canvas作为纹理*/
+   //canvas贴图
+   function addOne5() {
+       let context,canvas;
+       let createCanvas = function (w,h) {
+           w = w || 30;
+           h = h || 30;
+           canvas=document.createElement("canvas");
+           canvas.height=w;
+           canvas.width=h;
+           context=canvas.getContext('2d');
+           drawNotChange(context);
+           context.fillStyle='blue';
+           context.beginPath();
+           context.arc(500,550,30,0,2*Math.PI,true);
+           context.closePath();
+           context.fill();
+           return canvas;
+       };
+       let time=0;//定义运动的执行次数
+       function run(cxt){
+           cxt.clearRect(0,0,1024,728);
+           drawNotChange(cxt);
+           cxt.save()
+           cxt.translate(500,400);
+           cxt.rotate(time*50*Math.PI/180);//设定每次旋转的度数
+           cxt.fillStyle='blue';
+           cxt.beginPath();
+           cxt.arc(0,150,30,0,2*Math.PI,false);
+           cxt.closePath();
+           cxt.fill();
+           cxt.restore()
+           time+=0.05;
+       }
+       function drawNotChange(context){
+           context.fillStyle='red';
+           context.beginPath();
+           context.arc(500,400,30,0,2*Math.PI,true);
+           context.closePath();
+           context.fill();
+           context.beginPath();
+           context.arc(500,400,150,0,2*Math.PI,true);
+           context.closePath();
+           context.stroke();
+       }
+       /* 绘制canvas作为纹理*/
+       const canvasTexture = new THREE.CanvasTexture(createCanvas(1024,728))
+       const boxGeo = new THREE.BoxGeometry(5,5,5)
+       const boxMaterial = new THREE.MeshLambertMaterial({
+           map:canvasTexture
+       })
+       const box  = new THREE.Mesh(boxGeo,boxMaterial)
+       box.position.set(X + 40,3,0)
+       scene.add(box)
+       box.castShadow = true;
+
+       function animate() {
+           requestAnimationFrame( animate )
+           run(context);//canvasDom Run
+           canvasTexture.needsUpdate = true;
+
+           renderer.render(scene, camera)
+       }
+       animate()
+   }
+   addOne5()
+
+   /**
+    * 视频
+    *
+    * */
+   function addOne6(){
+       const texture =new THREE.VideoTexture(document.getElementById("video"));
+       texture.minFilter = THREE.LinearFilter;
+       texture.magFilter = THREE.LinearFilter;
+       texture.format = THREE.RGBFormat;
+
+       const boxGeo = new THREE.BoxGeometry(5,5,5)
+       const boxMaterial = new THREE.MeshLambertMaterial({
+           map:texture
+       })
+       const box  = new THREE.Mesh(boxGeo,boxMaterial)
+       box.position.set(X + 50,3,0)
+       scene.add(box)
+       box.castShadow = true;
+   }
+   addOne6()
+
+   function animate() {
+       controls.update()
+
+       renderer.render(scene, camera)
+       requestAnimationFrame(animate)
+   }
+
+   animate()
+
+
+</script>
+
+</body>
+</html>

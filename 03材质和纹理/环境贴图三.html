@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="../js/three.min.js"></script>
+    <script src="../js/OrbitControls.js"></script>
+    <script src="../js/Init.js"></script>
+    <style>
+        #box{
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+    </style>
+
+</head>
+<body>
+<div class="ys-absolute-container" id="box" style="overflow: hidden"></div>
+<script>
+   let el=document.getElementById('box')
+    let app=new THREE.inithree(el,{
+        axes:true,
+    })
+    let scene=app.scene
+    let renderer=app.renderer
+    let camera=app.camera
+    let controls=app.controls
+
+
+    camera.position.set(50, 50, 50)
+    camera.lookAt(new THREE.Vector3(0, 0, 0))
+
+
+   function addLight(){
+       const light = new THREE.SpotLight();
+       light.position.set(0, 30, 30);
+       light.intensity = 2;
+       scene.add(light);
+       light.castShadow = true
+   }
+   addLight()
+   /**
+    * 环境贴图
+    * 本例使用 立方体模拟四周， CubeTextureLoader加载六个方向图片
+    * */
+
+   const textureLoader = new THREE.TextureLoader()
+   textureLoader.load('../images//all.jpg',texture =>{
+       const sphere = new THREE.SphereGeometry( 25,50,50 );
+       const  material = new THREE.MeshBasicMaterial({
+           map:texture,
+           color: 0xffffff,
+           side:THREE.BackSide,
+       });
+       const mesh = new THREE.Mesh(sphere, material);
+
+       scene.add(mesh)
+   })
+
+
+   camera.position.set(0,0,0)
+   function animate() {
+       controls.update()
+
+       renderer.render(scene, camera)
+       requestAnimationFrame(animate)
+   }
+
+   animate()
+
+
+</script>
+
+</body>
+</html>
