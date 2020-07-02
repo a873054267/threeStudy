@@ -99,7 +99,7 @@
    renderer.render(scene,camera)
 
    const origin = new THREE.Vector3(0,0,0);
-
+  window.camera=camera
 
     //动画、鼠标交互用animate更容易实现
    function animate() {
@@ -110,6 +110,7 @@
        const lz = r * Math.sin( t );
        const ly = 5.0 + 5.0 * Math.sin( t / 3.0 );
        rectLight.position.set( lx, ly, lz );
+     //  rectLight.position.set( camera.position.x, camera.position.y, camera.position.z );
        rectLight.lookAt( origin ); //始终看原点
        renderer.render( scene, camera );
    }

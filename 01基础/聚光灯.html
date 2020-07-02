@@ -84,6 +84,8 @@
     //动画、鼠标交互用animate更容易实现
    function animate() {
        controls.update()
+       //spotLight.position.set( camera.position.x, camera.position.y, camera.position.z );
+
        renderer.render(scene, camera)
        requestAnimationFrame(animate)
    }
