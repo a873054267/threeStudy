@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="../js/three.min.js"></script>
+    <script src="../js/OrbitControls.js"></script>
+    <script src="../js/Init.js"></script>
+    <style>
+        #box{
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+    </style>
+
+</head>
+<body>
+<div class="ys-absolute-container" id="box" style="overflow: hidden"></div>
+<script src="../js/plugins/MeshLine.js"></script>
+
+<script>
+    let el=document.getElementById('box')
+    let app=new THREE.inithree(el,{
+        axes:true,
+    })
+    let scene=app.scene
+    let renderer=app.renderer
+    let camera=app.camera
+    let controls=app.controls
+
+
+    camera.position.set(50, 50, 50)
+    camera.lookAt(new THREE.Vector3(0, 0, 0))
+
+
+
+    function addGroundPlane() {
+        // create the ground plane
+        var planeGeometry = new THREE.PlaneGeometry(60, 20, 120, 120);
+        var planeMaterial = new THREE.MeshPhongMaterial({
+            color: 0xffffff
+        });
+        var plane = new THREE.Mesh(planeGeometry, planeMaterial);
+        plane.receiveShadow = true;
+        // rotate and position the plane
+        plane.rotation.x = -0.5 * Math.PI;
+        plane.position.x = 15;
+        plane.position.y = 0;
+        plane.position.z = 0;
+        scene.add(plane);
+        return plane;
+    }
+
+    addGroundPlane()
+
+    var ambientLight = new THREE.AmbientLight(0xffffff,0.9);
+    scene.add(ambientLight);
+
+    // 参数依次为color、强度、距离、角度，penumbra，decay
+    var spotLight = new THREE.SpotLight(0x00ff00);
+    spotLight.position.set(30,25,-10)
+    scene.add(spotLight);
+    // const  spotLightHelper = new THREE.SpotLightHelper( spotLight )
+    // scene.add( spotLightHelper )
+
+    var amount = 1000;
+
+    var radius = 200;
+
+    var positions = new Float32Array(amount * 3);
+    var colors = new Float32Array(amount * 3);
+    var sizes = new Float32Array(amount);
+
+    var vertex = new THREE.Vector3();
+    var color = new THREE.Color(0xffffff);
+
+    for (var i = 0; i < amount; i++) {
+        vertex.x = (Math.random() * 2 - 1) * radius;
+        vertex.y = (Math.random() * 2 - 1) * radius;
+        vertex.z = (Math.random() * 2 - 1) * radius;
+        vertex.toArray(positions, i * 3);
+        if (vertex.x < 0) {
+            color.setHSL(0.5 + 0.1 * (i / amount), 0.7, 0.5);
+
+        } else {
+            color.setHSL(0.0 + 0.1 * (i / amount), 0.9, 0.5);
+        }
+
+        color.toArray(colors, i * 3);
+
+        sizes[i] = 2; //线粗细
+
+    }
+    var curve = new THREE.CatmullRomCurve3();
+    function Point(pos) {
+        this.vector = new THREE.Vector3(pos.x, pos.y, pos.z);
+    }
+    var points = [
+        new Point({ x: -100, y: 0, z: 0 }),
+        new Point({ x: -50, y: 50, z: 0 }),
+        new Point({ x: 100.199427036501952, y: 0, z: 0 }),
+    ]
+    points.forEach(function (point) {
+        curve.points.push(point.vector);
+    });
+    var geometry = new THREE.Geometry();
+    geometry.vertices = curve.getPoints(amount - 1);
+    var pointArr = [];
+    var colorArr = [];
+    var objArr = geometry.vertices;
+    for (var i = 0; i < objArr.length; i++) {
+        pointArr.push(objArr[i].x);
+        pointArr.push(objArr[i].y);
+        pointArr.push(objArr[i].z);
+        colorArr.push(0);
+        colorArr.push(0);
+        colorArr.push(1);
+    }
+    pointArr = new Float32Array(pointArr);
+
+    var geometry = new THREE.BufferGeometry();
+    geometry.addAttribute('position', new THREE.BufferAttribute(pointArr, 3));
+    geometry.addAttribute('customColor', new THREE.BufferAttribute(colors, 3));
+    geometry.addAttribute('size', new THREE.BufferAttribute(sizes, 1));
+    let v=`
+    attribute float size;  //顶点大小，由geometry的属性传入
+    attribute vec3 customColor; //顶点自定义颜色，由geometry的属性传入
+        varying vec3 vColor; //插值颜色
+        void main() {
+
+            vColor = customColor;    //插值颜色，由geometry的属性传入
+            gl_PointSize = 5.0*size ;
+            //gl_Position的计算总是固定为 投影矩阵*模型视图矩阵*位置向量
+            gl_Position =  projectionMatrix*modelViewMatrix * vec4( position, 1.0 );
+
+        }`
+
+    //原文顶点着色器后三句为，个人没发现size的区别，就简化了
+    // vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
+    //
+    // gl_PointSize = size * ( 300.0 / -mvPosition.z );
+    //
+    // gl_Position = projectionMatrix * mvPosition;
+  let f=`
+        uniform vec3 color;   //顶点颜色 ，由shader构造材质时引入
+        uniform sampler2D pointTexture; //顶点纹理采样器
+        varying vec3 vColor;  //顶点插值颜色
+
+        void main() {
+           //原文 gl_FragColor = vec4( color * vColor, 1.0 ) * texture2D( pointTexture, gl_PointCoord );
+           //改为一下方式更好看，也易于初学者理解一些
+            gl_FragColor = vec4( color * vColor, 1.0 ) ;
+
+        }
+`
+
+    var material = new THREE.ShaderMaterial({
+
+        uniforms: {
+            color: { value: new THREE.Color(0xf0ffff) },
+            pointTexture: { value: new THREE.TextureLoader().load("../images/red_line.png") }
+        },
+        vertexShader: v,
+        fragmentShader: f,
+
+        // blending: THREE.AdditiveBlending,
+        depthTest: false,
+        depthWrite: false,
+        transparent: true
+
+    });
+    sphere = new THREE.Points(geometry, material);
+    scene.add(sphere);
+
+    let arr,delArray,newArray
+    function animate() {
+        controls.update()
+        //实际上该种方式就是一堆点构线，将点数组的前三个一直取出，在拼接到最后，造成流动的效果
+        //实际上并不是线，放大之后就可以看得很清楚
+        arr = sphere.geometry.attributes.position.array.toString().split(",");
+        delArray = arr.splice(0, 9);
+        newArray = arr.concat(delArray);
+        sphere.geometry.attributes.position.array = new Float32Array(newArray);
+        sphere.geometry.attributes.position.needsUpdate = true;
+        renderer.render(scene, camera)
+        requestAnimationFrame(animate)
+    }
+
+    animate()
+
+
+</script>
+
+</body>
+</html>

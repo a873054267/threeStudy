@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="../js/three.min.js"></script>
+    <script src="../js/OrbitControls.js"></script>
+    <script src="../js/Init.js"></script>
+    <style>
+        #box{
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+    </style>
+
+</head>
+<body>
+<div class="ys-absolute-container" id="box" style="overflow: hidden"></div>
+<script src="../js/plugins/MeshLine.js"></script>
+
+<script>
+    let el=document.getElementById('box')
+    let app=new THREE.inithree(el,{
+        axes:true,
+    })
+    let scene=app.scene
+    let renderer=app.renderer
+    let camera=app.camera
+    let controls=app.controls
+
+
+    camera.position.set(50, 50, 50)
+    camera.lookAt(new THREE.Vector3(0, 0, 0))
+
+
+
+    function addGroundPlane() {
+        // create the ground plane
+        var planeGeometry = new THREE.PlaneGeometry(60, 20, 120, 120);
+        var planeMaterial = new THREE.MeshPhongMaterial({
+            color: 0xffffff
+        });
+        var plane = new THREE.Mesh(planeGeometry, planeMaterial);
+        plane.receiveShadow = true;
+        // rotate and position the plane
+        plane.rotation.x = -0.5 * Math.PI;
+        plane.position.x = 15;
+        plane.position.y = 0;
+        plane.position.z = 0;
+        scene.add(plane);
+        return plane;
+    }
+
+    addGroundPlane()
+
+    var ambientLight = new THREE.AmbientLight(0xffffff,0.9);
+    scene.add(ambientLight);
+
+    // 参数依次为color、强度、距离、角度，penumbra，decay
+    var spotLight = new THREE.SpotLight(0x00ff00);
+    spotLight.position.set(30,25,-10)
+    scene.add(spotLight);
+    // const  spotLightHelper = new THREE.SpotLightHelper( spotLight )
+    // scene.add( spotLightHelper )
+
+    var amount = 1000;
+
+    var radius = 200;
+
+    var positions = new Float32Array(amount * 3);
+    var colors = new Float32Array(amount * 3);
+    var sizes = new Float32Array(amount);
+
+    var vertex = new THREE.Vector3();
+    var color = new THREE.Color(0xffffff);
+
+    for (var i = 0; i < amount; i++) {
+
+        vertex.x = (Math.random() * 2 - 1) * radius;
+        vertex.y = (Math.random() * 2 - 1) * radius;
+        vertex.z = (Math.random() * 2 - 1) * radius;
+        vertex.toArray(positions, i * 3);
+
+        if (vertex.x < 0) {
+
+            color.setHSL(0.5 + 0.1 * (i / amount), 0.7, 0.5);
+
+        } else {
+
+            color.setHSL(0.0 + 0.1 * (i / amount), 0.9, 0.5);
+
+        }
+
+        color.toArray(colors, i * 3);
+
+        sizes[i] = 20; //线粗细
+
+    }
+    var curve = new THREE.CatmullRomCurve3();
+    function Point(pos) {
+        this.vector = new THREE.Vector3(pos.x, pos.y, pos.z);
+    }
+    var points = [
+        new Point({ x: -100, y: 0, z: 0 }),
+        new Point({ x: -50, y: 50, z: 0 }),
+        new Point({ x: 100.199427036501952, y: 0, z: 0 }),
+    ]
+    points.forEach(function (point) {
+        curve.points.push(point.vector);
+    });
+    var geometry = new THREE.Geometry();
+    geometry.vertices = curve.getPoints(amount - 1);
+    var pointArr = [];
+    var colorArr = [];
+    var objArr = geometry.vertices;
+    for (var i = 0; i < objArr.length; i++) {
+        pointArr.push(objArr[i].x);
+        pointArr.push(objArr[i].y);
+        pointArr.push(objArr[i].z);
+        colorArr.push(0);
+        colorArr.push(0);
+        colorArr.push(1);
+    }
+    pointArr = new Float32Array(pointArr);
+
+    var geometry = new THREE.BufferGeometry();
+    geometry.addAttribute('position', new THREE.BufferAttribute(pointArr, 3));
+    geometry.addAttribute('customColor', new THREE.BufferAttribute(colors, 3));
+    geometry.addAttribute('size', new THREE.BufferAttribute(sizes, 1));
+
+  let f=`  uniform vec3 color;
+        uniform sampler2D pointTexture;
+
+        varying vec3 vColor;
+
+        void main() {
+
+
+            gl_FragColor = vec4( color * vColor, 1.0 ) * texture2D( pointTexture, gl_PointCoord );
+
+        }
+`
+    let v=`attribute float size;
+        attribute vec3 customColor;
+
+        varying vec3 vColor;
+
+        void main() {
+
+            vColor = customColor;
+
+            vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
+
+            gl_PointSize = size * ( 300.0 / -mvPosition.z );
+
+            gl_Position = projectionMatrix * mvPosition;
+
+        }`
+    var material = new THREE.ShaderMaterial({
+
+        uniforms: {
+            color: { value: new THREE.Color(0xf0ffff) },
+            pointTexture: { value: new THREE.TextureLoader().load("../images/red_line.png") }
+        },
+        vertexShader: v,
+        fragmentShader: f,
+
+        // blending: THREE.AdditiveBlending,
+        depthTest: false,
+        depthWrite: false,
+        transparent: true
+
+    });
+
+    sphere = new THREE.Points(geometry, material);
+    scene.add(sphere);
+
+
+
+    function animate() {
+        controls.update()
+
+        var geometry = sphere.geometry;
+        var attributes = geometry.attributes;
+
+        var arr = attributes.position.array.toString().split(",");
+
+
+        var delArray = arr.splice(0, 9);
+        var newArray = arr.concat(delArray);
+
+        attributes.position.array = new Float32Array(newArray);
+        attributes.position.needsUpdate = true;
+        renderer.render(scene, camera)
+        requestAnimationFrame(animate)
+    }
+
+    animate()
+
+
+</script>
+
+</body>
+</html>
