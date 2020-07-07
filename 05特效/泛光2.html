@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="../js/three.min.js"></script>
+    <script src="../js/OrbitControls.js"></script>
+    <script src="../js/Init.js"></script>
+    <style>
+        #box{
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+    </style>
+
+</head>
+<body>
+<div class="ys-absolute-container" id="box" style="overflow: hidden"></div>
+<script src="../js/plugins/SubdivisionModifier.js"></script>
+
+
+<script>
+
+
+    let el=document.getElementById('box')
+    let app=new THREE.inithree(el,{
+        axes:true,
+    })
+    let scene=app.scene
+    let renderer=app.renderer
+    let camera=app.camera
+    let controls=app.controls
+
+
+    camera.position.set(50, 50, 50)
+    camera.lookAt(new THREE.Vector3(0, 0, 0))
+
+
+    const textureLoader = new THREE.TextureLoader()
+
+    init();
+    animate();
+
+    // FUNCTIONS
+    function init()
+    {
+
+        // LIGHT
+        var light = new THREE.PointLight(0xffffff);
+        light.position.set(0,250,0);
+        scene.add(light);
+        // FLOOR
+        var floorTexture =textureLoader.load( '../images/checkerboard.jpg' );
+        floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping;
+        floorTexture.repeat.set( 10, 10 );
+        var floorMaterial = new THREE.MeshBasicMaterial( { map: floorTexture, side: THREE.DoubleSide } );
+        var floorGeometry = new THREE.PlaneGeometry(1000, 1000, 10, 10);
+        var floor = new THREE.Mesh(floorGeometry, floorMaterial);
+        floor.position.y = -100.5;
+        floor.rotation.x = Math.PI / 2;
+        //scene.add(floor);
+
+     let v=`
+uniform vec3 viewVector;
+uniform float c;
+uniform float p;
+varying float intensity;
+void main()
+{
+    vec3 vNormal = normalize( normalMatrix * normal );
+	vec3 vNormel = normalize( normalMatrix * viewVector );
+	intensity = pow( c - dot(vNormal, vNormel), p );
+	 vec3 actual_normal = vec3(modelMatrix * vec4(normal, 0.0));
+    intensity = pow( dot(normalize(viewVector), actual_normal), 6.0 );
+    gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+}`
+        let f=`
+uniform vec3 glowColor;
+varying float intensity;
+void main()
+{
+	vec3 glow = glowColor * intensity;
+    gl_FragColor = vec4( glow, 1.0 );
+}`
+
+
+
+        var sphereGeom = new THREE.SphereGeometry(100, 32, 16);
+
+        var moonTexture = textureLoader.load( '../images/moon.jpg' );
+        var moonMaterial = new THREE.MeshBasicMaterial( { map: moonTexture } );
+        var moon = new THREE.Mesh(sphereGeom, moonMaterial);
+        moon.position.set(150,0,-150);
+        scene.add(moon);
+
+        // create custom material from the shader code above
+        //   that is within specially labeled script tags
+        var customMaterial = new THREE.ShaderMaterial(
+            {
+                uniforms:
+                    {
+                        "c":   { type: "f", value: 1.0 },
+                        "p":   { type: "f", value: 1.4 },
+                        glowColor: { type: "c", value: new THREE.Color(0xffff00) },
+                        viewVector: { type: "v3", value: camera.position }
+                    },
+                vertexShader:   v,
+                fragmentShader:f,
+                side: THREE.FrontSide,
+                blending: THREE.AdditiveBlending,
+                transparent: true
+            }   );
+
+        // this.moonGlow = new THREE.Mesh( sphereGeom.clone(), customMaterial.clone() );
+        // moonGlow.position = moon.position;
+        // moonGlow.scale.multiplyScalar(1.2);
+        // scene.add( moonGlow );
+
+        var cubeGeom = new THREE.CubeGeometry(150,150,150,2,2,2);
+        var crateTexture = textureLoader.load( '../images/crate.png' );
+        var crateMaterial = new THREE.MeshBasicMaterial( { map: crateTexture } );
+        this.crate = new THREE.Mesh(cubeGeom, crateMaterial);
+        crate.position.set(-150,0,-150);
+        scene.add(crate);
+
+        var smoothCubeGeom = cubeGeom.clone();
+        // var modifier = new THREE.SubdivisionModifier( 2 );
+        // modifier.modify( smoothCubeGeom );
+
+        this.crateGlow = new THREE.Mesh( smoothCubeGeom, customMaterial.clone() );
+        crateGlow.position = crate.position;
+        crateGlow.scale.multiplyScalar(1.5);
+        scene.add( crateGlow );
+
+
+    }
+
+    function animate()
+    {
+        requestAnimationFrame( animate );
+        render();
+        update();
+    }
+
+    function update()
+    {
+        controls.update();
+        // moonGlow.material.uniforms.viewVector.value =
+        //     new THREE.Vector3().subVectors( camera.position, moonGlow.position );
+        crateGlow.material.uniforms.viewVector.value =
+            new THREE.Vector3().subVectors( camera.position, crateGlow.position );
+    }
+
+    function render()
+    {
+        renderer.render( scene, camera );
+    }
+
+</script>
+</body>
+</html>

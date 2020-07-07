@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="../js/three.min.js"></script>
+    <script src="../js/OrbitControls.js"></script>
+    <script src="../js/Init.js"></script>
+    <style>
+        #box{
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+    </style>
+
+</head>
+<body>
+<div class="ys-absolute-container" id="box" style="overflow: hidden"></div>
+<script src="../js/plugins/SubdivisionModifier.js"></script>
+<script src="../js/plugins/MTLLoader.js"></script>
+
+<script src="../js/plugins/OBJLoader.js"></script>
+
+<script>
+
+
+    let el=document.getElementById('box')
+    let app=new THREE.inithree(el,{
+        axes:true,
+    })
+    let scene=app.scene
+    let renderer=app.renderer
+    let camera=app.camera
+    let controls=app.controls
+
+    let v=`
+uniform vec3 viewVector;
+uniform float c;
+uniform float p;
+varying float intensity;
+void main()
+{
+    vec3 vNormal = normalize( normalMatrix * normal );
+	vec3 vNormel = normalize( normalMatrix * viewVector );
+	intensity = pow( c - dot(vNormal, vNormel), p );
+	 vec3 actual_normal = vec3(modelMatrix * vec4(normal, 0.0));
+    intensity = pow( dot(normalize(viewVector), actual_normal), 6.0 );
+    gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+}`
+    let f=`
+uniform vec3 glowColor;
+varying float intensity;
+void main()
+{
+	vec3 glow = glowColor * intensity;
+    gl_FragColor = vec4( glow, 1.0 );
+}`
+    var customMaterial = new THREE.ShaderMaterial(
+        {
+            uniforms:
+                {
+                    "c":   { type: "f", value: 1.0 },
+                    "p":   { type: "f", value: 1.4 },
+                    glowColor: { type: "c", value: new THREE.Color(0xffff00) },
+                    viewVector: { type: "v3", value: camera.position }
+                },
+            vertexShader:   v,
+            fragmentShader:f,
+            side: THREE.FrontSide,
+            blending: THREE.AdditiveBlending,
+            transparent: true
+        }   );
+    var obj
+    let kankane= new THREE.MTLLoader().setPath( '../data//models/obj/city/' )
+    kankane .load( 'ny1.mtl', function ( materials ) {
+        materials.preload()
+        new THREE.OBJLoader()
+            .setPath( '../data//models/obj/city/' )
+            .setMaterials( materials )
+            .load( 'ny1.obj', function ( object ) {
+                object.traverse(e =>{
+                    e.material =customMaterial
+
+                })
+                obj=object
+                window.obj=obj
+                console.log(materials)
+                const p =  new THREE.Box3().setFromObject(obj).getCenter(new THREE.Vector3())
+                console.log(p)
+                camera.position.set(p.x + 500,p.y+500,p.z + 500)
+                controls.target.set(p.x,p.y,p.z)
+
+                scene.add( object )
+
+            },)
+
+    })
+
+    function animate() {
+        controls.update()
+
+        renderer.render(scene, camera)
+        requestAnimationFrame(animate)
+    }
+
+    animate()
+
+
+
+</script>
+</body>
+</html>
