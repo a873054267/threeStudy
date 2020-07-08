@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="../js/three.min.js"></script>
+    <script src="../js/OrbitControls.js"></script>
+    <script src="../js/DragControls.js"></script>
+    <script src="../js/TransformControls.js"></script>
+    <script src="../js/Init.js"></script>
+    <style>
+        #box{
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+    </style>
+
+</head>
+<body>
+<div class="ys-absolute-container" id="box" style="overflow: hidden"></div>
+<script>
+   let el=document.getElementById('box')
+    let app=new THREE.inithree(el,{
+
+    })
+    let scene=app.scene
+    let renderer=app.renderer
+    let camera=app.camera
+    let controls=app.controls
+   //add light
+   const directionalLight = new THREE.DirectionalLight( '#fff' )
+   directionalLight.position.set( 30, 30, 30 ).normalize()
+   scene.add( directionalLight )
+   const ambientLight = new THREE.AmbientLight('#fff',0.3) // obj 唯一 id
+   scene.add(ambientLight)
+
+
+
+    camera.position.set(50, 50, 50)
+    camera.lookAt(new THREE.Vector3(0, 0, 0))
+
+
+   const boxGeo = new THREE.BoxBufferGeometry(20,20,20)
+   function randomColor() {
+       return `rgb(${parseInt(Math.random() * 256)},${parseInt(Math.random() * 256)},${parseInt(Math.random() * 256)})`
+   }
+   let currentHover
+   for(let i = 0; i<500;i++){
+       const mesh = new THREE.Mesh( boxGeo, new THREE.MeshStandardMaterial({color:randomColor()}))
+       mesh.position.set(Math.random()*800-400,Math.random()*800-400,Math.random()*800-400)
+       scene.add(mesh)
+   }
+   el.addEventListener('mousemove',function (event) {
+       event.preventDefault()
+       const mouse = new THREE.Vector2()
+       const raycaster = new THREE.Raycaster()
+       let objectList = []
+       try {
+           mouse.x = (((event.clientX || (event.touches[0]? event.touches[0].pageX : event.changedTouches[0].pageX)) - el.getBoundingClientRect().left) / el.offsetWidth) * 2 - 1
+           mouse.y = -(((event.clientY || (event.touches[0]? event.touches[0].pageY : event.changedTouches[0].pageY)) - el.getBoundingClientRect().top) / el.offsetHeight) * 2 + 1
+           raycaster.setFromCamera(mouse, camera)
+           objectList = raycaster.intersectObjects(scene.children, true)
+       }
+       catch (e) {
+           // 鼠标越界
+       }
+       let objList=objectList
+       if (objList.length > 0) {
+           if (currentHover !== objList[0].object) { //Mesh // Line //Points .name === "you need"
+               if ( currentHover ) currentHover.material.emissive.setHex( currentHover.currentHex )
+               currentHover = objList[0].object;
+               currentHover.currentHex = currentHover.material.emissive.getHex();
+               currentHover.material.emissive.setHex( 0xff0000 );
+           }
+       } else {
+           if (currentHover) currentHover.material.emissive.setHex( currentHover.currentHex )
+           currentHover = null
+       }
+   },true)
+    //动画、鼠标交互用animate更容易实现
+   function animate() {
+       controls.update()
+       renderer.render(scene, camera)
+       requestAnimationFrame(animate)
+   }
+
+   animate()
+
+
+</script>
+
+</body>
+</html>
