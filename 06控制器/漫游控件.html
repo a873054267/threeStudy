@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="../js/three.min.js"></script>
+    <script src="../js/OrbitControls.js"></script>
+    <script src="../js/tween.min.js"></script>
+    <script src="../js/Init.js"></script>
+    <style>
+        #box{
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+    </style>
+
+</head>
+<body>
+<div class="ys-absolute-container" id="box" style="overflow: hidden"></div>
+<script>
+   let el=document.getElementById('box')
+    let app=new THREE.inithree(el,{
+
+    })
+    let scene=app.scene
+    let renderer=app.renderer
+    let camera=app.camera
+   let controls=app.controls
+
+
+
+
+   const box = new THREE.Mesh(new THREE.BoxGeometry(4,4,4),new THREE.MeshBasicMaterial({
+       color:'red'
+   }))
+   scene.add(box)
+
+
+   const option = {
+       position:[100,100,-100],//新的位置
+       controls:[1,1,100], //控制器新的中心点位置(围绕此点旋转等)
+       duration:5000,
+       start:function(){
+           console.log("开始了");
+       },
+       update:function(){
+           console.log("飞行中");
+       },
+       done:function(){
+           console.log("结束了");
+       },
+       stop:function(){
+           console.log("停止了");
+       }
+   }
+
+   option.position = option.position || [] //相机新的位置
+   option.controls = option.controls || [] //控制器新的中心点位置(围绕词典旋转等)
+   option.duration = option.duration || 1000 //飞行时间
+   option.easing =  option.easing || TWEEN.Easing.Linear.None
+   TWEEN.removeAll()
+
+   const curPosition = camera.position
+       , controlsTar = controls.target
+       , tween = new TWEEN.Tween({
+       x1: curPosition.x, // 相机当前位置x
+       y1: curPosition.y, // 相机当前位置y
+       z1: curPosition.z, // 相机当前位置z
+       x2: controlsTar.x, // 控制当前的中心点x
+       y2: controlsTar.y, // 控制当前的中心点y
+       z2: controlsTar.z // 控制当前的中心点z
+   }).to({
+       x1: option.position[0], // 新的相机位置x
+       y1: option.position[1], // 新的相机位置y
+       z1: option.position[2], // 新的相机位置z
+       x2: option.controls[0], // 新的控制中心点位置x
+       y2: option.controls[1], // 新的控制中心点位置x
+       z2: option.controls[2] // 新的控制中心点位置x
+   }, option.duration).easing(TWEEN.Easing.Linear.None) // TWEEN.Easing.Cubic.InOut //匀速
+   tween.onUpdate(() => {
+       controls.enabled = false
+       camera.position.set(tween._object.x1, tween._object.y1, tween._object.z1)
+       controls.target.set(tween._object.x2, tween._object.y2, tween._object.z2)
+       controls.update()
+       if (option.update instanceof Function)
+           option.update(tween)
+   })
+   tween.onStart(()=> {
+       controls.enabled = false
+       if (option.start instanceof Function)
+           option.start()
+   })
+   tween.onComplete(() => {
+       controls.enabled = true
+       if (option.done instanceof Function)
+           option.done()
+   })
+   tween.onStop( () => option.stop instanceof Function? option.stop():'')
+   tween.start()
+   TWEEN.add(tween)
+
+
+
+   function animate() {
+       controls.update()
+       TWEEN.update()
+       requestAnimationFrame(animate)
+       renderer.render(scene,camera)
+   }
+   animate()
+
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="../js/three.min.js"></script>
+    <script src="../js/OrbitControls.js"></script>
+    <script src="../js/RollControls.js"></script>
+    <script src="../js/Init.js"></script>
+    <style>
+        #box{
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+    </style>
+
+</head>
+<body>
+<div class="ys-absolute-container" id="box" style="overflow: hidden"></div>
+<script>
+   let el=document.getElementById('box')
+    let app=new THREE.inithree(el,{
+
+    })
+    let scene=app.scene
+    let renderer=app.renderer
+    let camera=app.camera
+
+
+
+
+   const box = new THREE.Mesh(new THREE.BoxGeometry(4,4,4),new THREE.MeshBasicMaterial({
+       color:'red'
+   }))
+   scene.add(box)
+
+
+   function initControls() {
+       const rollControls = new THREE.RollControls(camera);
+       rollControls.movementSpeed = 25;
+       rollControls.lookSpeed = 3;
+       return rollControls
+   }
+   const rollControls = initControls()
+   const clock = new THREE.Clock()
+   function animate() {
+       const delta = clock.getDelta()
+       rollControls.update(delta)
+       requestAnimationFrame(animate)
+       renderer.render(scene,camera)
+   }
+   animate()
+</script>
+
+</body>
+</html>

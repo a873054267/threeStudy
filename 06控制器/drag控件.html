@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="../js/three.min.js"></script>
+    <script src="../js/OrbitControls.js"></script>
+    <script src="../js/DragControls.js"></script>
+    <script src="../js/TransformControls.js"></script>
+    <script src="../js/Init.js"></script>
+    <style>
+        #box{
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+    </style>
+
+</head>
+<body>
+<div class="ys-absolute-container" id="box" style="overflow: hidden"></div>
+<script>
+   let el=document.getElementById('box')
+    let app=new THREE.inithree(el,{
+
+    })
+    let scene=app.scene
+    let renderer=app.renderer
+    let camera=app.camera
+    let controls=app.controls
+
+
+
+
+    camera.position.set(50, 50, 50)
+    camera.lookAt(new THREE.Vector3(0, 0, 0))
+
+
+
+   const boxGeo = new THREE.BoxGeometry(5,5,5)
+   function randomColor () {
+     return  `rgb(${parseInt(Math.random() * 256)},${parseInt(Math.random() * 256)},${parseInt(Math.random() * 256)})`
+   }
+   for(let i =0;i<50;i++){
+       const box = new THREE.Mesh(boxGeo,new THREE.MeshBasicMaterial({color:randomColor()}))
+       box.position.set(Math.random()*100 - 50,0,Math.random()*100 - 50)
+       scene.add(box)
+   }
+
+
+
+   // 添加拖拽控件
+   function initDragControls() {
+       // 添加平移控件
+       const transformControls = new THREE.TransformControls(camera, renderer.domElement);
+       scene.add(transformControls);
+
+       // 过滤不是 Mesh 的物体,例如辅助网格对象
+       const objects = [];
+       for (let i = 0; i < scene.children.length; i++) {
+           if (scene.children[i].isMesh) {
+               objects.push(scene.children[i]);
+           }
+       }
+       // 初始化拖拽控件
+       const dragControls = new THREE.DragControls(objects, camera, renderer.domElement);
+
+       // 鼠标略过事件
+       dragControls.addEventListener('hoveron', function (event) {
+           // 让变换控件对象和选中的对象绑定
+           transformControls.attach(event.object);
+           // 设置三维坐标轴的大小，这个坐标轴不会随着模型的缩放而缩放
+           // transformControls.setSize(0.4);
+       });
+       // 开始拖拽
+       dragControls.addEventListener('dragstart', function (event) {
+           controls.enabled = false; //拖拽的时候 controls禁止
+       });
+       // 拖拽结束
+       dragControls.addEventListener('dragend', function (event) {
+           controls.enabled = true;
+       });
+
+   }
+   initDragControls()
+    //动画、鼠标交互用animate更容易实现
+   function animate() {
+       controls.update()
+       renderer.render(scene, camera)
+       requestAnimationFrame(animate)
+   }
+
+   animate()
+
+
+</script>
+
+</body>
+</html>
