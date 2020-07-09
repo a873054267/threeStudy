@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="../js/three.min.js"></script>
+    <script src="../js/OrbitControls.js"></script>
+    <script src="../js/Init.js"></script>
+    <style>
+        #box{
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+    </style>
+
+</head>
+<body>
+<div class="ys-absolute-container" id="box" style="overflow: hidden"></div>
+<script>
+   let el=document.getElementById('box')
+    let app=new THREE.inithree(el,{
+        axes:true,
+    })
+    let scene=app.scene
+    let renderer=app.renderer
+    let camera=app.camera
+    let controls=app.controls
+
+
+    camera.position.set(50, 50, 50)
+    camera.lookAt(new THREE.Vector3(0, 0, 0))
+
+
+   function addLight(){
+       const light = new THREE.SpotLight();
+       light.position.set(0, 30, 30);
+       light.intensity = 2;
+       scene.add(light);
+       light.castShadow = true
+   }
+   addLight()
+
+   const loader = new THREE.TextureLoader()
+   let uniforms
+   const Gradient = {
+       vs:`
+    varying vec2 vUv;
+    void main(){
+    vUv = uv;
+    gl_Position = projectionMatrix*viewMatrix*modelMatrix*vec4( position, 1.0 );
+  }
+    `,
+       fs:` //过度切换
+  uniform sampler2D texture1;
+  uniform sampler2D texture2;
+  uniform float time;     // 变化时间
+  varying vec2 vUv;
+  void main() {
+    vec4 color1 = texture2D( texture1, vUv);
+    vec4 color2 = texture2D( texture2, vUv);
+    gl_FragColor = mix(color1, color2, abs(sin(time))); // 使用内置的 mix() 函数做两张图的线性插值渐变效果
+  }
+    `,
+       fs2: `//横向I切换
+  uniform sampler2D texture1;
+  uniform sampler2D texture2;
+  uniform float time;     // 变化时间
+  varying vec2 vUv;
+  void main() {
+     float m = smoothstep(0.0, 0.0, vUv.x - abs(sin(time))*1.5);
+     gl_FragColor = mix(texture2D(texture1, (vUv - 0.5) * (1.0 - m) + 0.5), texture2D(texture2, (vUv - 0.5) * m + 0.5), m);
+  }`,
+       fs3: ` //放大过度切换
+  precision mediump float;
+  uniform sampler2D texture1;
+  uniform sampler2D texture2;
+  uniform float time;     // 变化时间
+  varying vec2 vUv;
+
+  void main() {
+        vec2 st = vUv;
+        st -= .5;
+        st *= 1.-smoothstep(0., 1., abs(sin(time)));
+        st += .5;
+        gl_FragColor =  mix(texture2D(texture1, vUv), texture2D(texture2, vUv), abs(sin(time)));
+  }`,
+
+   }
+   loader.load("../images/huaji_1.png",texture1 =>{
+       loader.load("../images/huaji_2.png",texture2 =>{
+           uniforms =  {
+               texture1: {
+                   value: texture1
+               },
+               texture2: {
+                   value: texture2
+               },
+               time: {
+                   value: 0
+               }
+           }
+
+           const  material = new THREE.ShaderMaterial({
+               uniforms: uniforms,
+               vertexShader:Gradient.vs ,
+               fragmentShader:Gradient.fs2, // fs，fs2，fs3
+               side:THREE.DoubleSide,
+               transparent:true
+           });
+
+           const plane = new THREE.Mesh(new THREE.PlaneGeometry(5,5),material)
+           plane.rotateX( -Math.PI/2)
+           scene.add(plane)
+       })
+   })
+
+
+   function animate() {
+       controls.update()
+       if(uniforms) uniforms.time.value = uniforms.time.value + 0.005
+       renderer.render(scene, camera)
+       requestAnimationFrame(animate)
+   }
+
+   animate()
+
+</script>
+
+</body>
+</html>

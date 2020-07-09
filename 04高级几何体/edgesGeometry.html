@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="../js/three.min.js"></script>
+    <script src="../js/OrbitControls.js"></script>
+
+    <script src="../js/Init.js"></script>
+    <style>
+        #box{
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+    </style>
+
+</head>
+<body>
+<div class="ys-absolute-container" id="box" style="overflow: hidden"></div>
+<script>
+   let el=document.getElementById('box')
+    let app=new THREE.inithree(el,{
+
+    })
+    let scene=app.scene
+    let renderer=app.renderer
+    let camera=app.camera
+    let controls=app.controls
+   //add light
+   const directionalLight = new THREE.DirectionalLight( '#fff' )
+   directionalLight.position.set( 30, 30, 30 ).normalize()
+   scene.add( directionalLight )
+   const ambientLight = new THREE.AmbientLight('#fff',0.3) // obj 唯一 id
+   scene.add(ambientLight)
+
+
+
+    camera.position.set(50, 50, 50)
+    camera.lookAt(new THREE.Vector3(0, 0, 0))
+
+
+   /*  ***********/
+   const boxGeometry = new THREE.BoxGeometry(5, 5, 5)
+   const box = new THREE.Mesh(boxGeometry, new THREE.MeshPhongMaterial({
+       color: 0xffff00,
+   }));
+
+   // 立方体几何体box作为EdgesGeometry参数创建一个新的几何体
+   const edges = new THREE.EdgesGeometry(boxGeometry)
+   const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({  // 立方体线框，不显示中间的斜线
+       color: 'red'
+   }))
+   //这里不能使用Line
+   /** LineSegments
+    * 在若干对的顶点之间绘制的一系列的线。 它会将我们传递的一系列点自动分配成两个为一组
+    * 它和Line几乎是相同的，唯一的区别是它在渲染时使用的是gl.LINES， 而不是gl.LINE_STRIP。
+    */
+
+   scene.add(box,line)
+    //动画、鼠标交互用animate更容易实现
+   function animate() {
+       controls.update()
+       renderer.render(scene, camera)
+       requestAnimationFrame(animate)
+   }
+
+   animate()
+
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="../js/three.min.js"></script>
+    <script src="../js/OrbitControls.js"></script>
+
+    <script src="../js/Init.js"></script>
+    <script src="../js/tween.min.js"></script>
+
+    <style>
+        #box{
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+    </style>
+
+</head>
+<body>
+<div class="ys-absolute-container" id="box" style="overflow: hidden"></div>
+<script>
+   let el=document.getElementById('box')
+    let app=new THREE.inithree(el,{
+
+    })
+    let scene=app.scene
+    let renderer=app.renderer
+    let camera=app.camera
+    let controls=app.controls
+
+
+
+
+    camera.position.set(50, 50, 50)
+    camera.lookAt(new THREE.Vector3(0, 0, 0))
+
+   renderer.setPixelRatio( window.devicePixelRatio )
+   renderer.shadowMap.enabled = true
+
+
+
+   //add light
+   const directionalLight = new THREE.DirectionalLight( '#fff' )
+   directionalLight.position.set( 30, 30, 30 ).normalize()
+   scene.add( directionalLight )
+   directionalLight.castShadow = true
+
+   const ambientLight = new THREE.AmbientLight('#fff',0.3) // obj 唯一 id
+   scene.add(ambientLight)
+
+   const pointLight = new THREE.PointLight( 'yellow',2 )
+   pointLight.position.set( 0, 30, 0 )
+   pointLight.castShadow = true
+   scene.add( pointLight )
+
+   /*  ***********/
+
+   /** add home */
+   const home = new THREE.Mesh(new THREE.BoxBufferGeometry(1000,100,1000),
+       new THREE.MeshStandardMaterial({color :'red',side:THREE.BackSide}),
+   )
+   home.position.set(0,50,0)
+   scene.add(home)
+
+   /** add plane */
+   const plane = new THREE.Mesh(new THREE.PlaneGeometry(1000,1000),new THREE.MeshStandardMaterial({color:'#fff',sde:THREE.DoubleSide}))
+   plane.rotateX(-Math.PI/2)
+   plane.name = 'plane'
+   plane.position.set(0,0.1,0)
+   scene.add(plane)
+   plane.receiveShadow = true
+
+   function randomColor() {
+       return `rgb(${parseInt(Math.random() * 256)},${parseInt(Math.random() * 256)},${parseInt(Math.random() * 256)})`
+   }
+   function addBox () {
+       return   new THREE.Mesh(new THREE.BoxBufferGeometry(4,10,4),new THREE.MeshStandardMaterial({color:randomColor()}))
+   }
+
+   /** add box1 */
+       //外边框线
+   const  lineMaterial = new THREE.LineBasicMaterial({
+           // 线的颜色
+           color: "#fff",
+           transparent: true,
+           opacity: 0.8,
+           depthFunc: THREE.AlwaysDepth
+       })
+   for(let i =0 ;i<50 ;i++) {
+       const box1 = addBox()
+       box1.position.set(Math.random()*1000-500,5,Math.random()*1000-500)
+       scene.add(box1)
+       box1.castShadow = true
+       const borderLine = new THREE.LineSegments(new THREE.EdgesGeometry(box1.geometry), lineMaterial)
+       box1.name = 'box'
+       borderLine.name  = 'border'
+       borderLine.visible = false
+       box1.add(borderLine)
+   }
+
+
+   /** add circle for mousemove on the plane */
+   const circle = new THREE.Mesh( new THREE.CircleGeometry(5,50),new THREE.MeshBasicMaterial({
+       color:'green',
+       transparent:true,
+       opacity:0.2,
+       side:THREE.DoubleSide
+   }))
+   circle.visible = false
+   circle.rotateX(-0.5*Math.PI)
+   circle.name = 'circle'
+   scene.add(circle)
+   let circleBorder
+   const loader  = new THREE.TextureLoader()
+   loader.load("../images/redCircle2.png",texture =>{
+       circle.material = new THREE.MeshBasicMaterial({
+           map:texture,
+           transparent:true,
+           opacity:0.9,
+           side:THREE.DoubleSide,
+           depthTest:false
+       })
+       circleBorder = new THREE.Mesh( new THREE.CircleGeometry(5,50), circle.material)
+       circleBorder.position.y = 0.2
+       circle.add(circleBorder)
+   })
+   let currentHover
+   el.addEventListener('mousemove',function (event) {
+       event.preventDefault()
+       const mouse = new THREE.Vector2()
+       const raycaster = new THREE.Raycaster()
+       let objectList = []
+       try {
+           mouse.x = (((event.clientX || (event.touches[0]? event.touches[0].pageX : event.changedTouches[0].pageX)) - el.getBoundingClientRect().left) / el.offsetWidth) * 2 - 1
+           mouse.y = -(((event.clientY || (event.touches[0]? event.touches[0].pageY : event.changedTouches[0].pageY)) - el.getBoundingClientRect().top) / el.offsetHeight) * 2 + 1
+           raycaster.setFromCamera(mouse, camera)
+           objectList = raycaster.intersectObjects(scene.children, true)
+       }
+       catch (e) {
+           // 鼠标越界
+       }
+       let objList=objectList
+       if (objList.length > 0) {
+
+           circle.position.copy(objList[0].point)
+           circle.position.y = 0.2
+           circle.visible = true
+       } else {
+           circle.visible=false
+
+       }
+   },true)
+
+   let haveClick = false
+
+
+function flyto(option){
+
+    option.position = option.position || [] //相机新的位置
+    option.controls = option.controls || [] //控制器新的中心点位置(围绕词典旋转等)
+    option.duration = option.duration || 1000 //飞行时间
+    option.easing =  option.easing || TWEEN.Easing.Linear.None
+    TWEEN.removeAll()
+
+    const curPosition = camera.position
+        , controlsTar = controls.target
+        , tween = new TWEEN.Tween({
+        x1: curPosition.x, // 相机当前位置x
+        y1: curPosition.y, // 相机当前位置y
+        z1: curPosition.z, // 相机当前位置z
+        x2: controlsTar.x, // 控制当前的中心点x
+        y2: controlsTar.y, // 控制当前的中心点y
+        z2: controlsTar.z // 控制当前的中心点z
+    }).to({
+        x1: option.position[0], // 新的相机位置x
+        y1: option.position[1], // 新的相机位置y
+        z1: option.position[2], // 新的相机位置z
+        x2: option.controls[0], // 新的控制中心点位置x
+        y2: option.controls[1], // 新的控制中心点位置x
+        z2: option.controls[2] // 新的控制中心点位置x
+    }, option.duration).easing(TWEEN.Easing.Linear.None) // TWEEN.Easing.Cubic.InOut //匀速
+    tween.onUpdate(() => {
+        controls.enabled = false
+        camera.position.set(tween._object.x1, tween._object.y1, tween._object.z1)
+        controls.target.set(tween._object.x2, tween._object.y2, tween._object.z2)
+        controls.update()
+        if (option.update instanceof Function)
+            option.update(tween)
+    })
+    tween.onStart(()=> {
+        controls.enabled = false
+        if (option.start instanceof Function)
+            option.start()
+    })
+    tween.onComplete(() => {
+        controls.enabled = true
+        if (option.done instanceof Function)
+            option.done()
+    })
+    tween.onStop( () => option.stop instanceof Function? option.stop():'')
+    tween.start()
+    TWEEN.add(tween)
+}
+   el.addEventListener('click',function (event) {
+       event.preventDefault()
+       const mouse = new THREE.Vector2()
+       const raycaster = new THREE.Raycaster()
+       let objectList = []
+       try {
+           mouse.x = (((event.clientX || (event.touches[0]? event.touches[0].pageX : event.changedTouches[0].pageX)) - el.getBoundingClientRect().left) / el.offsetWidth) * 2 - 1
+           mouse.y = -(((event.clientY || (event.touches[0]? event.touches[0].pageY : event.changedTouches[0].pageY)) - el.getBoundingClientRect().top) / el.offsetHeight) * 2 + 1
+           raycaster.setFromCamera(mouse, camera)
+           objectList = raycaster.intersectObjects(scene.children, true)
+       }
+       catch (e) {
+           // 鼠标越界
+       }
+       if(objectList.length > 0) {
+           const obj = objectList[0]
+
+           if(obj.object.name ==='circle'){
+               const x = circle.position.x
+                   ,z = circle.position.z,
+                   y = camera.position.y,
+                   v = camera.position.clone().sub(controls.target.clone()) //差
+               haveClick = true
+
+               const option ={
+                   position:[x ,y ,z],
+                   controls:[x-v.x ,y-v.y ,z-v.z],
+                   duration:500,
+                   done:function () {
+
+                   }
+               }
+               flyto(option)
+           }
+       }
+   })
+   //动画、鼠标交互用animate更容易实现
+   function animate() {
+       controls.update()
+       TWEEN.update()
+       renderer.render(scene, camera)
+       requestAnimationFrame(animate)
+   }
+
+   animate()
+
+
+</script>
+
+</body>
+</html>

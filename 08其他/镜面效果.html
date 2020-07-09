@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="../js/three.min.js"></script>
+    <script src="../js/OrbitControls.js"></script>
+
+    <script src="../js/Init.js"></script>
+    <script src="../js/Reflector.js"></script>
+
+    <style>
+        #box{
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+    </style>
+
+</head>
+<body>
+<div class="ys-absolute-container" id="box" style="overflow: hidden"></div>
+<script>
+    let el=document.getElementById('box')
+    let app=new THREE.inithree(el,{
+
+    })
+    let scene=app.scene
+    let renderer=app.renderer
+    let camera=app.camera
+    let controls=app.controls
+    //add light
+    const directionalLight = new THREE.DirectionalLight( '#fff' )
+    directionalLight.position.set( 30, 30, 30 ).normalize()
+    scene.add( directionalLight )
+    const ambientLight = new THREE.AmbientLight('#fff',0.3) // obj 唯一 id
+    scene.add(ambientLight)
+
+
+
+    camera.position.set(50, 50, 50)
+    camera.lookAt(new THREE.Vector3(0, 0, 0))
+    const box = new THREE.Mesh(new THREE.BoxGeometry(20,20,20),new THREE.MeshLambertMaterial({color:"red"}))
+    box.position.set(0,30,0)
+    scene.add(box)
+    //圆镜子
+    const geometry2 = new THREE.CircleBufferGeometry( 40, 40 );
+    const groundMirror2 = new THREE.Reflector( geometry2, {
+        clipBias: 0.003,
+        textureWidth: el.offsetWidth * window.devicePixelRatio,
+        textureHeight: el.offsetHeight * window.devicePixelRatio,
+        color: 'yellow',
+        recursion: 1
+    } );
+    groundMirror2.position.y = 1;
+    groundMirror2.rotateX( - Math.PI / 2 );
+    scene.add( groundMirror2 );
+
+
+    /**  walls */
+    /* 镜子*/
+    const geometry = new THREE.PlaneBufferGeometry( 100, 100 );
+    const verticalMirror = new THREE.Reflector( geometry, {
+        clipBias: 0.003,
+        textureWidth: el.offsetWidth * window.devicePixelRatio,
+        textureHeight: el.offsetHeight * window.devicePixelRatio,
+        color: 0x889999,
+        recursion: 1
+    } );
+    verticalMirror.position.y = 50;
+    verticalMirror.position.z = - 50;
+    scene.add( verticalMirror );
+
+    /* 其他面 */
+    const planeGeo = new THREE.PlaneBufferGeometry( 100.1, 100.1 )
+
+    const planeTop = new THREE.Mesh( planeGeo, new THREE.MeshPhongMaterial( {
+        color: 0xffffff
+        // ,side:THREE.DoubleSide
+    } ));
+    planeTop.position.y = 100;
+    planeTop.rotateX( Math.PI / 2 );
+    scene.add( planeTop );
+
+    const planeBottom = new THREE.Mesh( planeGeo, new THREE.MeshPhongMaterial( {
+        color: 0xffffff
+        // ,side:THREE.DoubleSide
+    } ) );
+    planeBottom.rotateX( - Math.PI / 2 );
+    scene.add( planeBottom );
+
+    const planeFront = new THREE.Mesh( planeGeo, new THREE.MeshPhongMaterial( {
+        color: 0x7f7fff
+        // ,side:THREE.DoubleSide
+    } ) );
+    planeFront.position.z = 50;
+    planeFront.position.y = 50;
+    planeFront.rotateY( Math.PI );
+    scene.add( planeFront );
+
+    const planeRight = new THREE.Mesh( planeGeo, new THREE.MeshPhongMaterial( {
+        color: 0x00ff00
+        // ,side:THREE.DoubleSide
+    } ) );
+    planeRight.position.x = 50;
+    planeRight.position.y = 50;
+    planeRight.rotateY( - Math.PI / 2 );
+    scene.add( planeRight );
+
+    const planeLeft = new THREE.Mesh( planeGeo, new THREE.MeshPhongMaterial( {
+        color: 0xff0000
+        // ,side:THREE.DoubleSide
+    } ) );
+    planeLeft.position.x = - 50;
+    planeLeft.position.y = 50;
+    planeLeft.rotateY( Math.PI / 2 );
+    scene.add( planeLeft );
+
+    // lights
+    const mainLight = new THREE.PointLight( 0xcccccc, 1.5, 250 );
+    mainLight.position.y = 60;
+    scene.add( mainLight );
+
+    const greenLight = new THREE.PointLight( 0x00ff00, 0.25, 1000 );
+    greenLight.position.set( 550, 50, 0 );
+    scene.add( greenLight );
+
+    const redLight = new THREE.PointLight( 0xff0000, 0.25, 1000 );
+    redLight.position.set( - 550, 50, 0 );
+    scene.add( redLight );
+
+    const blueLight = new THREE.PointLight( 0x7f7fff, 0.25, 1000 );
+    blueLight.position.set( 0, 50, 550 );
+    scene.add( blueLight );
+
+    function animate() {
+        controls.update()
+        renderer.render(scene, camera)
+        requestAnimationFrame(animate)
+    }
+
+    animate()
+
+
+</script>
+
+</body>
+</html>

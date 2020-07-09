@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="../js/three.min.js"></script>
+    <script src="../js/OrbitControls.js"></script>
+
+    <script src="../js/Init.js"></script>
+    <script src="../js/Reflector.js"></script>
+
+    <style>
+        #box{
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+    </style>
+
+</head>
+<body>
+<div class="ys-absolute-container" id="box" style="overflow: hidden"></div>
+<script>
+   let el=document.getElementById('box')
+    let app=new THREE.inithree(el,{
+
+    })
+    let scene=app.scene
+    let renderer=app.renderer
+    let camera=app.camera
+    let controls=app.controls
+   //add light
+   const directionalLight = new THREE.DirectionalLight( '#fff' )
+   directionalLight.position.set( 30, 30, 30 ).normalize()
+   scene.add( directionalLight )
+   const ambientLight = new THREE.AmbientLight('#fff',0.3) // obj 唯一 id
+   scene.add(ambientLight)
+
+
+
+    camera.position.set(50, 50, 50)
+    camera.lookAt(new THREE.Vector3(0, 0, 0))
+   const box = new THREE.Mesh(new THREE.BoxGeometry(20,20,20),new THREE.MeshLambertMaterial({color:"red"}))
+   box.position.set(0,30,0)
+   scene.add(box)
+   //圆镜子
+   const geometry2 = new THREE.CircleBufferGeometry( 40, 40 );
+   const groundMirror2 = new THREE.Reflector( geometry2, {
+       clipBias: 0.003,
+       textureWidth: el.offsetWidth * window.devicePixelRatio,
+       textureHeight: el.offsetHeight * window.devicePixelRatio,
+       color: 'yellow',
+       recursion: 1
+   } );
+   groundMirror2.position.y = 1;
+   groundMirror2.rotateX( - Math.PI / 2 );
+   scene.add( groundMirror2 );
+
+
+
+
+   /* 其他面 */
+   const planeGeo = new THREE.PlaneBufferGeometry( 100.1, 100.1 )
+
+   const planeTop = new THREE.Mesh( planeGeo, new THREE.MeshPhongMaterial( {
+       color: 0xffffff
+       // ,side:THREE.DoubleSide
+   } ));
+   planeTop.position.y = 100;
+   planeTop.rotateX( Math.PI / 2 );
+   scene.add( planeTop );
+
+   const planeBottom = new THREE.Mesh( planeGeo, new THREE.MeshPhongMaterial( {
+       color: 0xffffff
+       // ,side:THREE.DoubleSide
+   } ) );
+   planeBottom.rotateX( - Math.PI / 2 );
+   scene.add( planeBottom );
+
+
+
+
+
+
+
+
+
+   function animate() {
+       controls.update()
+       renderer.render(scene, camera)
+       requestAnimationFrame(animate)
+   }
+
+   animate()
+
+
+</script>
+
+</body>
+</html>

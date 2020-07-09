@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="../js/three.min.js"></script>
+    <script src="../js/OrbitControls.js"></script>
+
+    <script src="../js/Init.js"></script>
+    <style>
+        #box{
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+    </style>
+
+</head>
+<body>
+<div class="ys-absolute-container" id="box" style="overflow: hidden"></div>
+<script>
+   let el=document.getElementById('box')
+    let app=new THREE.inithree(el,{
+
+    })
+    let scene=app.scene
+    let renderer=app.renderer
+    let camera=app.camera
+   //add light
+   const directionalLight = new THREE.DirectionalLight( '#fff' )
+   directionalLight.position.set( 30, 30, 30 ).normalize()
+   scene.add( directionalLight )
+   const ambientLight = new THREE.AmbientLight('#fff',0.3) // obj 唯一 id
+   scene.add(ambientLight)
+
+
+   const box = new THREE.Mesh(new THREE.BoxGeometry(5,5,5),new THREE.MeshBasicMaterial({color:'red',opacity:0.5,transparent:true}))
+   scene.add(box)
+   /*
+   * 计算当前几何体的外边界矩形。该方法会更新 Geometry.boundingBox
+   * .computeBoundingSphere:计算当前几何体的外边界球。该方法会更新 Geometry.boundingSphere 属性值。
+   * 计算外边界矩形或外边界球并不是默认会自动调用的方法，这两个函数需要被显示的调用才能得到相应属性值，否则对应属性值保持默认值 null。
+   * */
+   box.geometry.computeBoundingBox()
+
+   const box2 = new THREE.Mesh(new THREE.BoxGeometry(1,1,1),new THREE.MeshBasicMaterial({color:'red'}))
+   box2.position.set(0,0,3)
+   box2.add(new THREE.AxisHelper(2))
+   scene.add(box2)
+
+   /**
+    * 判断obj2是否在obj1空间内部。
+    * @param obj1
+    * @param obj2
+    * @returns {*|boolean}
+    */
+   camera.position.set(30,30,30)
+   const isIn = (obj1,obj2) =>{
+       const position = obj2.getWorldPosition(new THREE.Vector3());
+       const localPosition = position.applyMatrix4(new THREE.Matrix4().getInverse(obj1.matrixWorld));
+       return obj1.geometry.boundingBox.containsPoint(localPosition) // geometry.boundingSphere //球形
+   }
+
+   /**
+    * 旋转 也可以使用 对象的.rotateX替代
+    * @param object 需要旋转的对象
+    * @param axis 旋转轴，是一个向量，new THREE.Vector3(1,0,0)表示绕x轴顺时针旋转
+    * @param radians 旋转的角度
+    */
+   const  rotateWorldAxis = (object, axis, radians) => {
+       const rm = new THREE.Matrix4()
+       rm.makeRotationAxis(axis.normalize(), radians)
+       rm.multiply(object.matrix)
+       object.matrix = rm
+       object.rotation.setFromRotationMatrix(object.matrix)
+   }
+   function animate(){
+
+       rotateWorldAxis(box,new THREE.Vector3(0,1,0),0.01*Math.PI)   // 或者:box.rotateX (0.01*Math.PI)
+       box2.rotateX (0.01*Math.PI)
+       requestAnimationFrame( animate )
+       if(isIn(box, box2)){
+           box2.material.color.set('red');
+       }else{
+           box2.material.color.set('#fff');
+       }
+       renderer.render(scene,camera)
+   }
+   animate()
+
+   //  //动画、鼠标交互用animate更容易实现
+   // function animate() {
+   //     controls.update()
+   //     renderer.render(scene, camera)
+   //     requestAnimationFrame(animate)
+   // }
+   //
+   // animate()
+
+
+</script>
+
+</body>
+</html>

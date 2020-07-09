@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="../js/three.min.js"></script>
+    <script src="../js/OrbitControls.js"></script>
+
+    <script src="../js/Init.js"></script>
+    <script src="../js/Water2.js"></script>
+    <script src="../js/Reflector.js"></script>
+    <script src="../js/Refractor.js"></script>
+
+
+    <style>
+        #box{
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+    </style>
+
+</head>
+<body>
+<div class="ys-absolute-container" id="box" style="overflow: hidden"></div>
+<script>
+   let el=document.getElementById('box')
+    let app=new THREE.inithree(el,{
+
+    })
+    let scene=app.scene
+    let renderer=app.renderer
+    let camera=app.camera
+    let controls=app.controls
+   //add light
+   const directionalLight = new THREE.DirectionalLight( '#fff' )
+   directionalLight.position.set( 30, 30, 30 ).normalize()
+   scene.add( directionalLight )
+   const ambientLight = new THREE.AmbientLight('#fff',0.3) // obj 唯一 id
+   scene.add(ambientLight)
+
+
+
+    camera.position.set(50, 50, 50)
+    camera.lookAt(new THREE.Vector3(0, 0, 0))
+
+   const box = new THREE.Mesh(new THREE.BoxGeometry(2,2,2),new THREE.MeshLambertMaterial({color:"red"}))
+   box.position.set(0,1,0)
+   scene.add(box)
+   /*  ***********/
+   // ground
+   const groundMaterial = new THREE.MeshStandardMaterial( { roughness: 0.8, metalness: 0.4 } );
+   const ground = new THREE.Mesh(  new THREE.PlaneBufferGeometry( 20, 20 ), groundMaterial );
+   ground.rotation.x = Math.PI * - 0.5
+   scene.add( ground )
+   const  textureLoader = new THREE.TextureLoader();
+   textureLoader.load( '../images/floor-bg.jpg', function ( texture ) {
+       texture.wrapS = THREE.RepeatWrapping;
+       texture.wrapT = THREE.RepeatWrapping;
+       texture.anisotropy = 16;
+       texture.repeat.set( 4, 4 );
+       groundMaterial.map = texture
+       groundMaterial.needsUpdate = true
+   });
+
+   // water
+   const  params = {
+       color: '#ffffff',
+       scale: 3,
+       flowX: 1,
+       flowY: 1
+   };
+   const  waterGeometry = new THREE.PlaneBufferGeometry( 20, 20 );
+   const water = new THREE.Water( waterGeometry, {
+       color: params.color,
+       scale: params.scale,
+       flowDirection: new THREE.Vector2( params.flowX, params.flowY ),
+       textureWidth: 1024,
+       textureHeight: 1024,
+       waterPath:["../images/Water_1_M_Normal.jpg","../images/Water_2_M_Normal.jpg"] //修改了源码
+   })
+   water.position.y = 0.1
+   water.rotation.x = Math.PI * - 0.5 //object
+   scene.add( water)
+
+
+
+   //动画、鼠标交互用animate更容易实现
+   function animate() {
+       controls.update()
+
+       renderer.render(scene, camera)
+       requestAnimationFrame(animate)
+   }
+
+   animate()
+
+
+</script>
+
+</body>
+</html>
