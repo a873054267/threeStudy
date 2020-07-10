@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="../js/three.min.js"></script>
+    <script src="../js/OrbitControls.js"></script>
+    <script src="../js/Init.js"></script>
+    <style>
+        #box{
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+    </style>
+
+</head>
+<body>
+<div class="ys-absolute-container" id="box" style="overflow: hidden"></div>
+<script>
+   let el=document.getElementById('box')
+    let app=new THREE.inithree(el,{
+        //axes:true,
+    })
+    let scene=app.scene
+    let renderer=app.renderer
+    let camera=app.camera
+    let controls=app.controls
+
+
+    camera.position.set(50, 50, 50)
+    camera.lookAt(new THREE.Vector3(0, 0, 0))
+
+
+   let texture = new THREE.TextureLoader().load('./circular.png'),
+       material = new THREE.MeshBasicMaterial({
+           map: texture,
+           transparent: true,
+           depthTest: false,
+           side: THREE.DoubleSide,
+           blending: THREE.AdditiveBlending
+       })
+
+
+   /* 添加一个圆 */
+   const addCircle = ()=>{
+       const geometry = new THREE.CircleGeometry( 20, 32 ); // 半径 / 分割面数量(三角形) ,实际上可以通过此来创建一个正多边形 改为4就成一个平面了。
+       const circle = new THREE.Mesh( geometry, material );
+       circle.position.set(0,0,0)
+       scene.add( circle );
+
+       return circle
+   }
+
+    let circle=addCircle()
+   circle.rotation.x=Math.PI/2
+
+   var ambientLight = new THREE.AmbientLight(0xffffff,1);
+   scene.add(ambientLight);
+   /**
+
+    */
+   const pointLight = new THREE.PointLight(0x00ff00,1,1000);
+
+   pointLight.position.set(-20,20,-10)
+   scene.add(pointLight)
+
+
+   pointLight.castShadow = true;
+
+
+   let hexagonColor = [0xffffff, 0xffff00]
+   let   hexagon = new THREE.Object3D()
+   function createHexagon(position, index) {
+       const color = hexagonColor[index]
+       let hexagonLine = new THREE.CircleGeometry(5, 6)
+       let hexagonPlane = new THREE.CircleGeometry(4, 6)
+       let vertices = hexagonLine.vertices
+       vertices.shift() // 第一个节点是中心点
+       let circleLineGeom = new THREE.Geometry()
+       circleLineGeom.vertices = vertices
+       let materialLine = new THREE.MeshBasicMaterial({
+           color: color,
+           side: THREE.DoubleSide
+       })
+       let materialPlane = new THREE.MeshBasicMaterial({
+           color: color,
+           side: THREE.DoubleSide,
+           opacity: 0.5
+       })
+       let circleLine = new THREE.LineLoop(circleLineGeom, materialLine)
+       let circlePlane = new THREE.Mesh(hexagonPlane, materialPlane)
+       circleLine.position.copy(position)
+       circlePlane.position.copy(position)
+       circlePlane.lookAt(new THREE.Vector3(0, 0, 0))
+       circleLine.lookAt(new THREE.Vector3(0, 0, 0))
+
+       hexagon.add(circleLine)
+       hexagon.add(circlePlane)
+       scene.add(hexagon)
+   }
+   let position={
+       x:0,
+       y:0,
+       z:0
+   }
+   hexagon.rotation.x=Math.PI/2 //旋转
+   createHexagon(position,1)
+
+    texture = new THREE.TextureLoader().load('./lightray.png'),
+       material = new THREE.MeshBasicMaterial({
+           map: texture,
+           transparent: true,
+           color:'yellow',
+           depthTest: false,
+           side: THREE.DoubleSide,
+           blending: THREE.AdditiveBlending
+       }),
+       geometry = new THREE.PlaneGeometry(10, 50),
+       plane1 = new THREE.Mesh(geometry, material)
+
+   //z方向
+   let plane2 = plane1.clone()
+   scene.add(plane1)
+
+   scene.add(plane2)
+   plane1.rotation.x=-Math.PI //将平面立起来
+   plane2.rotation.x=-Math.PI  //将平面立起来
+   plane1.rotation.y=Math.PI/2 //旋转90°
+   plane1.position.set(0,25,0)
+   plane2.position.set(0,25,0)
+   var gp=new THREE.Group()
+   gp.add(hexagon)
+   gp.add(plane2)
+   gp.add(plane1)
+   let gp2=gp.clone()
+   gp2.position.set(10,10,10)
+
+   scene.add(gp)
+   //scene.add(gp2)
+
+
+
+    //动画、鼠标交互用animate更容易实现
+   function animate() {
+       controls.update()
+       circle.rotation.z+=0.01
+       renderer.render(scene, camera)
+       requestAnimationFrame(animate)
+   }
+
+   animate()
+
+
+</script>
+
+</body>
+</html>
