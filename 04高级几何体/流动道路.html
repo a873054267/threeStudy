@@ -587,17 +587,20 @@
             })
 
             const textureLoader = new THREE.TextureLoader();
-            let url='../images/traffic_01.png'
+            let url='../images/nanshan-road1.png'
             var roadMap = textureLoader.load(url);
             roadMap.wrapS = THREE.RepeatWrapping
             roadMap.wrapT = THREE.RepeatWrapping
             roadMap.rotation = Math.PI / 2;
             roadMap.offset.set(0.5, 0.5);
+            url='../images/nanshan-road2.png'
             var roadMap1 = textureLoader.load(url);
             roadMap1.wrapS = THREE.RepeatWrapping
             roadMap1.wrapT = THREE.RepeatWrapping
             roadMap1.rotation = Math.PI / 2;
             roadMap1.offset.set(0.5, 0.5);
+            url='../images/nanshan-road3.png'
+
             var roadMap2 =textureLoader.load(url);
             roadMap2.wrapS = THREE.RepeatWrapping
             roadMap2.wrapT = THREE.RepeatWrapping
@@ -701,7 +704,7 @@
 
             function animate() {
                 roadmats[0].map.offset.x += 0.003
-                roadmats[1].map.offset.x += 0.006
+                roadmats[1].map.offset.x += 0.00003
                 roadmats[2].map.offset.x += 0.009
                 controls.update()
                 renderer.render(scene,camera)

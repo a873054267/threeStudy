@@ -9,6 +9,14 @@
     <script src="../js/Init.js"></script>
     <script src="../js/tween.min.js"></script>
 
+    <script src='../js/LineSegmentsGeometry.js'></script>
+    <script src='../js/LineGeometry.js'></script>
+    <script src='../js/WireframeGeometry2.js'></script>
+    <script src='../js/LineMaterial.js'></script>
+    <script src='../js/LineSegments2.js'></script>
+    <script src='../js/Line2.js'></script>
+    <script src='../js/Wireframe.js'></script>
+
     <style>
         #box{
             position: absolute;
@@ -103,59 +111,7 @@
    }
 
 
-   /** add circle for mousemove on the plane */
-   const circle = new THREE.Mesh( new THREE.CircleGeometry(5,50),new THREE.MeshBasicMaterial({
-       color:'green',
-       transparent:true,
-       opacity:0.2,
-       side:THREE.DoubleSide
-   }))
-   circle.visible = false
-   circle.rotateX(-0.5*Math.PI)
-   circle.name = 'circle'
-   scene.add(circle)
-   let circleBorder
-   const loader  = new THREE.TextureLoader()
-   loader.load("../images/redCircle2.png",texture =>{
-       circle.material = new THREE.MeshBasicMaterial({
-           map:texture,
-           transparent:true,
-           opacity:0.9,
-           side:THREE.DoubleSide,
-           depthTest:false
-       })
-       circleBorder = new THREE.Mesh( new THREE.CircleGeometry(5,50), circle.material)
-       circleBorder.position.y = 0.2
-       circle.add(circleBorder)
-   })
-   let currentHover
-   el.addEventListener('mousemove',function (event) {
-       event.preventDefault()
-       const mouse = new THREE.Vector2()
-       const raycaster = new THREE.Raycaster()
-       let objectList = []
-       try {
-           mouse.x = (((event.clientX || (event.touches[0]? event.touches[0].pageX : event.changedTouches[0].pageX)) - el.getBoundingClientRect().left) / el.offsetWidth) * 2 - 1
-           mouse.y = -(((event.clientY || (event.touches[0]? event.touches[0].pageY : event.changedTouches[0].pageY)) - el.getBoundingClientRect().top) / el.offsetHeight) * 2 + 1
-           raycaster.setFromCamera(mouse, camera)
-           objectList = raycaster.intersectObjects(scene.children, true)
-       }
-       catch (e) {
-           // 鼠标越界
-       }
-       let objList=objectList
-       if (objList.length > 0) {
 
-           circle.position.copy(objList[0].point)
-           circle.position.y = 0.2
-           circle.visible = true
-       } else {
-           circle.visible=false
-
-       }
-   },true)
-
-   let haveClick = false
 
 
 function flyto(option){
@@ -205,43 +161,73 @@ function flyto(option){
     tween.start()
     TWEEN.add(tween)
 }
-   el.addEventListener('click',function (event) {
-       event.preventDefault()
-       const mouse = new THREE.Vector2()
-       const raycaster = new THREE.Raycaster()
-       let objectList = []
-       try {
-           mouse.x = (((event.clientX || (event.touches[0]? event.touches[0].pageX : event.changedTouches[0].pageX)) - el.getBoundingClientRect().left) / el.offsetWidth) * 2 - 1
-           mouse.y = -(((event.clientY || (event.touches[0]? event.touches[0].pageY : event.changedTouches[0].pageY)) - el.getBoundingClientRect().top) / el.offsetHeight) * 2 + 1
-           raycaster.setFromCamera(mouse, camera)
-           objectList = raycaster.intersectObjects(scene.children, true)
-       }
-       catch (e) {
-           // 鼠标越界
-       }
-       if(objectList.length > 0) {
-           const obj = objectList[0]
+   let position=[[10,0,10],[200,0,200],[300,0,300],[500,0,500]]
 
-           if(obj.object.name ==='circle'){
-               const x = circle.position.x
-                   ,z = circle.position.z,
-                   y = camera.position.y,
-                   v = camera.position.clone().sub(controls.target.clone()) //差
-               haveClick = true
 
-               const option ={
-                   position:[x ,y ,z],
-                   controls:[x-v.x ,y-v.y ,z-v.z],
-                   duration:500,
-                   done:function () {
 
-                   }
+
+
+   function addExportLine() {
+       const position = [
+           500,5,500,
+           300,5,300,
+           200,5,200,
+
+           10,5,10, //对应一个向量 的 x,y,z
+
+
+
+       ]
+       const color = [
+           255,0,0, //对应一个color的 r g b
+           255,0,0,
+           255,0,0
+       ]
+       const geometry = new THREE.LineGeometry()
+       geometry.setPositions( position )
+       geometry.setColors( color )
+
+       const  matLine = new THREE.LineMaterial( {
+           linewidth: 5, // px
+           vertexColors: THREE.VertexColors,
+           dashed: false
+       });
+       matLine.resolution.set( el.offsetWidth, el.offsetHeight ); // 必须的 不然无限大
+       const  line = new THREE.Line2( geometry, matLine );
+       line.computeLineDistances();
+       //line.scale.set( 1, 1, 1 );
+       scene.add( line )
+       return line
+   }
+   addExportLine()
+
+  function digui() {
+       if(position.length>0){
+           let v=position.shift()
+           const x = v[0]
+               ,z = v[2],
+               y = camera.position.y,
+               vv = camera.position.clone().sub(controls.target.clone()) //差
+           let option={
+               position:[x ,y ,z],
+               controls:[x-vv.x ,y-vv.y ,z-vv.z],
+               duration:1500,
+               done:function () {
+                digui()
+
                }
-               console.log(option)
-               flyto(option)
+
            }
+           flyto(option)
+
+
        }
-   })
+
+  }
+
+
+ digui()
+
    //动画、鼠标交互用animate更容易实现
    function animate() {
        controls.update()

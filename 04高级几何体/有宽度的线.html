@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="../js/three.min.js"></script>
+    <script src="../js/OrbitControls.js"></script>
+    <script src="../js/Init.js"></script>
+    <script src='../js/LineSegmentsGeometry.js'></script>
+    <script src='../js/LineGeometry.js'></script>
+    <script src='../js/WireframeGeometry2.js'></script>
+    <script src='../js/LineMaterial.js'></script>
+    <script src='../js/LineSegments2.js'></script>
+    <script src='../js/Line2.js'></script>
+    <script src='../js/Wireframe.js'></script>
+
+
+    <style>
+        #box{
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+    </style>
+
+</head>
+<body>
+<div class="ys-absolute-container" id="box" style="overflow: hidden"></div>
+
+<script>
+    let el=document.getElementById('box')
+    let app=new THREE.inithree(el,{
+        axes:true,
+    })
+    let scene=app.scene
+    let renderer=app.renderer
+    let camera=app.camera
+    let controls=app.controls
+
+
+    camera.position.set(50, 50, 50)
+    camera.lookAt(new THREE.Vector3(0, 0, 0))
+
+
+
+
+    var ambientLight = new THREE.AmbientLight(0xffffff,0.9);
+    scene.add(ambientLight);
+
+    // 参数依次为color、强度、距离、角度，penumbra，decay
+    var spotLight = new THREE.SpotLight(0x00ff00);
+    spotLight.position.set(30,25,-10)
+    scene.add(spotLight);
+
+    /* 使用额外引入的js*/
+    function addExportLine() {
+        const position = [
+            0,0,0, //对应一个向量 的 x,y,z
+            -1,1,-1,
+            -2,3,-4
+        ]
+        const color = [
+            255,255,255, //对应一个color的 r g b
+            255,0,0,
+            255,0,255
+        ]
+        const geometry = new THREE.LineGeometry()
+        geometry.setPositions( position )
+        geometry.setColors( color )
+
+        const  matLine = new THREE.LineMaterial( {
+            linewidth: 5, // px
+            vertexColors: THREE.VertexColors,
+            dashed: false
+        });
+        matLine.resolution.set( el.offsetWidth, el.offsetHeight ); // 必须的 不然无限大
+        const  line = new THREE.Line2( geometry, matLine );
+        line.computeLineDistances();
+        //line.scale.set( 1, 1, 1 );
+        scene.add( line )
+        return line
+    }
+    addExportLine()
+    function animate() {
+        controls.update()
+
+
+        renderer.render(scene, camera)
+        requestAnimationFrame(animate)
+    }
+
+    animate()
+
+
+</script>
+
+</body>
+</html>
