@@ -34,7 +34,21 @@
     camera.lookAt(new THREE.Vector3(0, 0, 0))
 
 
-   let texture = new THREE.TextureLoader().load('./circular.png'),
+
+   var ambientLight = new THREE.AmbientLight(0xffffff,1);
+   scene.add(ambientLight);
+   /**
+
+    */
+   const pointLight = new THREE.PointLight(0x00ff00,1,1000);
+
+   pointLight.position.set(-20,20,-10)
+   scene.add(pointLight)
+
+
+   pointLight.castShadow = true;
+
+   let texture = new THREE.TextureLoader().load('../images/circular.png'),
        material = new THREE.MeshBasicMaterial({
            map: texture,
            transparent: true,
@@ -54,22 +68,8 @@
        return circle
    }
 
-    let circle=addCircle()
+   let circle=addCircle()
    circle.rotation.x=Math.PI/2
-
-   var ambientLight = new THREE.AmbientLight(0xffffff,1);
-   scene.add(ambientLight);
-   /**
-
-    */
-   const pointLight = new THREE.PointLight(0x00ff00,1,1000);
-
-   pointLight.position.set(-20,20,-10)
-   scene.add(pointLight)
-
-
-   pointLight.castShadow = true;
-
 
    let hexagonColor = [0xffffff, 0xffff00]
    let   hexagon = new THREE.Object3D()
@@ -109,7 +109,7 @@
    hexagon.rotation.x=Math.PI/2 //旋转
    createHexagon(position,1)
 
-    texture = new THREE.TextureLoader().load('./lightray.png'),
+    texture = new THREE.TextureLoader().load('../images/lightray.png'),
        material = new THREE.MeshBasicMaterial({
            map: texture,
            transparent: true,
@@ -135,18 +135,20 @@
    gp.add(hexagon)
    gp.add(plane2)
    gp.add(plane1)
+   gp.add(circle)
    let gp2=gp.clone()
    gp2.position.set(10,10,10)
 
    scene.add(gp)
    //scene.add(gp2)
+   window.gp=gp
 
 
 
     //动画、鼠标交互用animate更容易实现
    function animate() {
        controls.update()
-       circle.rotation.z+=0.01
+        gp.rotation.y+=0.01
        renderer.render(scene, camera)
        requestAnimationFrame(animate)
    }

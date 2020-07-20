@@ -66,13 +66,26 @@
    scene.add( pointLight )
 
    /*  ***********/
+   let loader=new THREE.TextureLoader()
+   let data=[
+       'px.jpg',//右(-1,0,0)
+       'nx.jpg',//左(1,0,0)
+       'py.jpg',//上(0,1,0)
+       'ny.jpg',//下(0,-1,0)
+       'pz.jpg',//前(0,0,1)
+       'nz.jpg'//后(0,0,-1)
+   ]
+   let txu=[]
+   data.map(v => {
+       loader.load("../images/"+v,texture=>{
+           txu.push(texture)
+
+       })
+   })
+
 
    /** add home */
-   const home = new THREE.Mesh(new THREE.BoxBufferGeometry(1000,100,1000),
-       new THREE.MeshStandardMaterial({color :'red',side:THREE.BackSide}),
-   )
-   home.position.set(0,50,0)
-   scene.add(home)
+
 
    /** add plane */
    const plane = new THREE.Mesh(new THREE.PlaneGeometry(1000,1000),new THREE.MeshStandardMaterial({color:'#fff',sde:THREE.DoubleSide}))
@@ -230,6 +243,25 @@ function flyto(option){
 
    //动画、鼠标交互用animate更容易实现
    function animate() {
+       if(txu.length==6){
+           let mat=[]
+           txu.map(v => {
+             mat.push(  new THREE.MeshStandardMaterial({
+                 // color :'red',
+                 map: v,
+                 side:THREE.DoubleSide
+
+             }))
+           })
+
+           const home = new THREE.Mesh(new THREE.BoxBufferGeometry(1000,100,1000),
+              mat
+           )
+           home.position.set(0,50,0)
+           scene.add(home)
+           txu.push(1)
+       }
+
        controls.update()
        TWEEN.update()
        renderer.render(scene, camera)

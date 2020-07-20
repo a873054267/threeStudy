@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="../js/three.min.js"></script>
+    <script src="../js/OrbitControls.js"></script>
+    <script src="../js/Init.js"></script>
+    <style>
+        #webgl{
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+    </style>
+
+</head>
+<body>
+<canvas class="ys-absolute-container" id="webgl" style="overflow: hidden"></canvas>
+<script src="../js/plugins/SubdivisionModifier.js"></script>
+<script id="vertexShader" type="x-shader/x-vertex">
+
+  attribute vec4 a_position;
+
+  uniform mat4 u_modelViewMatrix;
+  uniform mat4 u_projectionMatrix;
+
+  void main() {
+    gl_Position = a_position;
+  }
+</script>
+<script id="fragmentShader"type="x-shader/x-fragment">
+
+    precision highp float;
+
+    uniform vec2 u_resolution;
+    uniform vec2 u_mouse;
+    uniform float u_time;
+    uniform sampler2D u_noise;
+
+    uniform float u_xscale;
+
+    const float AA = .02;
+    const float blur = .2;
+    const float size = .3;
+    const float width = .08;
+
+    #define PI 3.14159265358979323846
+
+    vec2 diagonalhash2(vec2 p)
+    {
+        return fract(vec2(sin((p.x + p.y) * 15.543) * 73964.686, sin((p.x + p.y) * 55.8543)*28560.986));
+    }
+
+    float rand(vec2 c){
+        return fract(sin(dot(c.xy ,vec2(12.9898,78.233))) * 43758.5453);
+    }
+
+    float noise(vec2 p, float freq ){
+        float unit = u_resolution.x/freq;
+        vec2 ij = floor(p/unit);
+        vec2 xy = mod(p,unit)/unit;
+        //xy = 3.*xy*xy-2.*xy*xy*xy;
+        xy = .5*(1.-cos(PI*xy));
+        float a = rand((ij+vec2(0.,0.)));
+        float b = rand((ij+vec2(1.,0.)));
+        float c = rand((ij+vec2(0.,1.)));
+        float d = rand((ij+vec2(1.,1.)));
+        float x1 = mix(a, b, xy.x);
+        float x2 = mix(c, d, xy.x);
+        return mix(x1, x2, xy.y);
+    }
+
+    vec3 pattern(vec2 uv, vec2 m) {
+        vec2 grid = floor(uv);
+        vec2 subuv = fract(uv);
+
+        float seed = noise(grid, 1000.);
+
+        float phase = sin(u_time * 5. + seed * 10.);
+        // phase = mix(phase, 1., max(1. - length(m*1.5), 0.));
+
+        float shape = 0.;
+        float df;
+
+        vec3 col = vec3(.6, .8, .3);
+
+        if(seed < .5) {
+            df = length(subuv-.5);
+        } else {
+            float s = sin(0.785398);
+            float c = cos(0.785398);
+            subuv = (subuv-.5) * mat2(c, -s, s, c);
+            vec2 offsetuv = (abs(subuv) + vec2(.0, .3));
+            df = max(offsetuv.x, offsetuv.y);
+            offsetuv = (abs(subuv) + vec2(.3, .0));
+            df = min(df, max(offsetuv.x, offsetuv.y));
+            col = vec3(.9, .3, .2);
+        }
+
+        float w = width * max(phase, 0.1);
+
+        shape = (smoothstep(size + w + AA,size + w, df) - smoothstep(size - w + AA,size - w, df)) * phase;
+        shape += (smoothstep(size + w * .1 + blur,size + w * .1, df) - smoothstep(size - w * .1,size - w * .1 - blur, df)) * phase;
+
+        vec3 colour = vec3(col * shape * 2.);
+
+        return colour;
+    }
+
+    void main() {
+        vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution.xy) / min(u_resolution.y, u_resolution.x);
+
+        // float a = atan(uv.y, uv.x) * (PI * 2.);
+        float l = length(uv);
+        uv *= 1. + dot(l, l)*.2;
+
+        gl_FragColor = texture2D(u_noise, uv + diagonalhash2(uv + u_time)) * .2;
+
+        vec2 m = u_mouse - uv;
+
+        uv *= 6. + sin(u_time) * 3.;
+
+        vec2 dir = vec2(u_time * 3.5, sin(u_time * 1.) * .8);
+        float a = dir.y * -.2;
+        float c = cos(a);
+        float s = sin(a);
+
+        uv *= mat2(c, -s, s, c);
+
+        uv += dir;
+
+
+        vec3 colour = pattern(uv, m);
+
+        gl_FragColor += vec4(colour,1.0);
+    }
+
+</script>
+<script src="./apxlmx.js"></script>
+<script >
+    console.clear();
+
+    const twodWebGL = new WTCGL(
+        document.querySelector('canvas#webgl'),
+        document.querySelector('script#vertexShader').textContent,
+        document.querySelector('script#fragmentShader').textContent,
+        window.innerWidth,
+        window.innerHeight,
+        2);
+
+    twodWebGL.startTime = -100 + Math.random();
+
+    window.addEventListener('resize', () => {
+        twodWebGL.resize(window.innerWidth, window.innerHeight);
+    });
+
+
+
+
+
+    // track mouse move
+    let mousepos = [0, 0];
+    const u_mousepos = twodWebGL.addUniform('mouse', WTCGL.TYPE_V2, mousepos);
+    window.addEventListener('pointermove', e => {
+        let ratio = window.innerHeight / window.innerWidth;
+        if (window.innerHeight > window.innerWidth) {
+            mousepos[0] = (e.pageX - window.innerWidth / 2) / window.innerWidth;
+            mousepos[1] = (e.pageY - window.innerHeight / 2) / window.innerHeight * -1 * ratio;
+        } else {
+            mousepos[0] = (e.pageX - window.innerWidth / 2) / window.innerWidth / ratio;
+            mousepos[1] = (e.pageY - window.innerHeight / 2) / window.innerHeight * -1;
+        }
+        twodWebGL.addUniform('mouse', WTCGL.TYPE_V2, mousepos);
+    });
+
+
+
+
+
+
+
+
+
+    // Load all our textures. We only initiate the instance once all images are loaded.
+    const textures = [
+        {
+            name: 'noise',
+            url: 'noise.png',
+            type: WTCGL.IMAGETYPE_TILE,
+            img: null }];
+
+
+    const loadImage = function (imageObject) {
+        let img = document.createElement('img');
+        img.crossOrigin = "anonymous";
+
+        return new Promise((resolve, reject) => {
+            img.addEventListener('load', e => {
+                imageObject.img = img;
+                resolve(imageObject);
+            });
+            img.addEventListener('error', e => {
+                reject(e);
+            });
+            img.src = imageObject.url;
+        });
+    };
+    const loadTextures = function (textures) {
+        return new Promise((resolve, reject) => {
+            const loadTexture = pointer => {
+                if (pointer >= textures.length || pointer > 10) {
+                    resolve(textures);
+                    return;
+                };
+                const imageObject = textures[pointer];
+
+                const p = loadImage(imageObject);
+                p.then(
+                    result => {
+                        twodWebGL.addTexture(result.name, result.type, result.img);
+                    },
+                    error => {
+                        console.log('error', error);
+                    }).finally(e => {
+                    loadTexture(pointer + 1);
+                });
+            };
+            loadTexture(0);
+        });
+
+    };
+
+    loadTextures(textures).then(
+        result => {
+            twodWebGL.initTextures();
+            // twodWebGL.render();
+            twodWebGL.running = true;
+        },
+        error => {
+            console.log('error');
+        });
+</script>
+</body>
+</html>

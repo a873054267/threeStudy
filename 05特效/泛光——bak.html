@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="../js/three.min.js"></script>
+    <script src="../js/OrbitControls.js"></script>
+    <script src="../js/Init.js"></script>
+    <style>
+        #box{
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+    </style>
+
+</head>
+<body>
+<div class="ys-absolute-container" id="box" style="overflow: hidden"></div>
+<script src="../js/plugins/SubdivisionModifier.js"></script>
+
+
+<script>
+
+
+    let el=document.getElementById('box')
+    let app=new THREE.inithree(el,{
+        axes:true,
+    })
+    let scene=app.scene
+    let renderer=app.renderer
+    let camera=app.camera
+    let controls=app.controls
+
+
+    camera.position.set(50, 50, 50)
+    camera.lookAt(new THREE.Vector3(0, 0, 0))
+
+    var ambientLight = new THREE.AmbientLight(0xffffff,1);
+    scene.add(ambientLight);
+    var material_glow, material;
+    var mesh;
+    init();
+    animate();
+
+
+    function init() {
+
+        var vertexShader	= [
+            'varying vec3	vVertexWorldPosition;',
+            'varying vec3	vVertexNormal;',
+
+            'varying vec4	vFragColor;',
+
+            'void main(){',
+            '	vVertexNormal	= normalize(normalMatrix * normal);',//将法线转换到视图坐标系中
+
+            '	vVertexWorldPosition	= (modelMatrix * vec4(position, 1.0)).xyz;',//将顶点转换到世界坐标系中
+
+            '	// set gl_Position',
+            '	gl_Position	= projectionMatrix * modelViewMatrix * vec4(position, 1.0);',
+            '}'
+
+        ].join('\n');
+        var fragmentShader1	= [
+            'uniform vec3	glowColor;',
+            'uniform float	coeficient;',
+            'uniform float	power;',
+
+            'varying vec3	vVertexNormal;',
+            'varying vec3	vVertexWorldPosition;',
+
+            'varying vec4	vFragColor;',
+
+            'void main(){',
+            '	vec3 worldCameraToVertex= vVertexWorldPosition - cameraPosition;',	//世界坐标系中从相机位置到顶点位置的距离
+            '	vec3 viewCameraToVertex	= (viewMatrix * vec4(worldCameraToVertex, 0.0)).xyz;',//视图坐标系中从相机位置到顶点位置的距离
+            '	viewCameraToVertex	= normalize(viewCameraToVertex);',//规一化
+            '	float intensity		= pow(coeficient + dot(vVertexNormal, viewCameraToVertex), power);',
+            '	gl_FragColor		= vec4(glowColor, intensity);',
+            '}'//vVertexNormal视图坐标系中点的法向量
+            //viewCameraToVertex视图坐标系中点到摄像机的距离向量
+            //dot点乘得到它们的夹角的cos值
+            //从中心向外面角度越来越小（从钝角到锐角）从cos函数也可以知道这个值由负变正，不透明度最终从低到高
+        ].join('\n');
+
+        var fragmentShader2	= [
+            'uniform vec3	glowColor;',
+            'uniform float	coeficient;',
+            'uniform float	power;',
+
+            'varying vec3	vVertexNormal;',
+            'varying vec3	vVertexWorldPosition;',
+
+            'varying vec4	vFragColor;',
+
+            'void main(){',
+            '	vec3 worldVertexToCamera= cameraPosition - vVertexWorldPosition;',	//世界坐标系中顶点位置到相机位置到的距离
+            '	vec3 viewCameraToVertex	= (viewMatrix * vec4(worldVertexToCamera, 0.0)).xyz;',//视图坐标系中从相机位置到顶点位置的距离
+            '	viewCameraToVertex	= normalize(viewCameraToVertex);',//规一化
+            '	float intensity		= coeficient + dot(vVertexNormal, viewCameraToVertex);',
+            '	if(intensity > 0.55){ intensity = 0.0;}',
+            '	gl_FragColor		= vec4(glowColor, intensity);',
+            '}'//vVertexNormal视图坐标系中点的法向量
+            //viewCameraToVertex视图坐标系中点到摄像机的距离向量
+            //dot点乘得到它们的夹角的cos值
+            //从中心向外面角度越来越大（从锐角到钝角）从cos函数也可以知道这个值由负变正，不透明度最终从高到低
+        ].join('\n');
+        //本质透明度递减
+        var sphere =  new THREE.SphereBufferGeometry( 6, 32, 32 );
+        material	= new THREE.ShaderMaterial({
+            uniforms: {
+                coeficient	: {
+                    type	: "f",
+                    value	: 1.0
+                },
+                power		: {
+                    type	: "f",
+                    value	: 2
+                },
+                glowColor	: {
+                    type	: "c",
+                    value	: new THREE.Color('blue')
+                }
+            },
+            vertexShader	: vertexShader,
+            fragmentShader	: fragmentShader1,
+            blending	: THREE.NormalBlending,
+            transparent	: true
+
+        });
+        material_glow	= new THREE.ShaderMaterial({
+            uniforms: {
+                coeficient	: {
+                    type	: "f",
+                    value	: 0.0
+                },
+                power		: {
+                    type	: "f",
+                    value	: 2
+                },
+                glowColor	: {
+                    type	: "c",
+                    value	: new THREE.Color('blue')
+                }
+            },
+            vertexShader	: vertexShader,
+            fragmentShader	: fragmentShader2,
+            blending	: THREE.NormalBlending,
+            transparent	: true
+
+        });
+        mesh = new THREE.Mesh(sphere, material_glow);
+
+        var sphere2 =  new THREE.SphereBufferGeometry( 5, 32, 32 );
+        var material2	= new THREE.MeshPhongMaterial({color:new THREE.Color('blue')
+        });
+
+        var mesh2 = new THREE.Mesh(sphere2, material2);
+
+        var diban_geo = new THREE.PlaneGeometry(50,50,10,10);
+        var material3	= new THREE.MeshPhongMaterial({color:new THREE.Color('glow')
+        });
+        var diban = new THREE.Mesh(diban_geo, material3);
+        diban.rotation.set(-Math.PI/2,0,0);
+        diban.position.set(0,-10,0);
+        scene.add(diban);
+        scene.add(mesh);
+        scene.add(mesh2);
+    }
+
+
+    function animate() {
+
+        requestAnimationFrame( animate );
+        camera.lookAt( scene.position );
+        renderer.render( scene, camera );
+        controls.update();
+    }
+
+
+
+</script>
+</body>
+</html>

@@ -34,15 +34,15 @@
     let earthImg, earthData, earthParticles = new THREE.Object3D(),
         cloud = new THREE.Object3D(),
         hexagon = new THREE.Object3D(),
-        dotTexture = new THREE.TextureLoader().load('./dot.png'),
-        coneImg = ['./lightray.png', './lightray_yellow.jpg'],
+        dotTexture = new THREE.TextureLoader().load('../images/dot.png'),
+        coneImg = ['../images/lightray.png', '../images/lightray_yellow.jpg'],
         hexagonColor = [0xffffff, 0xffff00]
 
     main()
 
     function main() {
         earthImg = document.createElement('img')
-        earthImg.src = './earth.jpg'
+        earthImg.src = '../images/earth.jpg'
         earthImg.onload = () => {
             let earthCanvas = document.createElement('canvas')
             earthCtx = earthCanvas.getContext('2d')

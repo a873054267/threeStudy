@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="../js/three.min.js"></script>
+    <script src="../js/OrbitControls.js"></script>
+    <script src="../js/Init.js"></script>
+    <style>
+        #box{
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+    </style>
+
+</head>
+<body>
+<div class="ys-absolute-container" id="box" style="overflow: hidden"></div>
+<script src="../js/plugins/SubdivisionModifier.js"></script>
+
+
+<script>
+
+
+    let el=document.getElementById('box')
+    let app=new THREE.inithree(el,{
+        axes:true,
+    })
+    let scene=app.scene
+    let renderer=app.renderer
+    let camera=app.camera
+    let controls=app.controls
+
+
+    camera.position.set(50, 50, 50)
+    camera.lookAt(new THREE.Vector3(0, 0, 0))
+
+    var ambientLight = new THREE.AmbientLight(0xffffff,1);
+    scene.add(ambientLight);
+    var material_glow, material;
+    var mesh;
+    init();
+    animate();
+
+
+    function init() {
+
+        var vertexShader	= [
+            'varying vec3	vVertexWorldPosition;',
+            'varying vec3	vVertexNormal;',
+
+            'varying vec4	vFragColor;',
+
+            'void main(){',
+            '	vVertexNormal	= normalize(normalMatrix * normal);',//将法线转换到视图坐标系中
+
+            '	vVertexWorldPosition	= (modelMatrix * vec4(position, 1.0)).xyz;',//将顶点转换到世界坐标系中
+
+            '	// set gl_Position',
+            '	gl_Position	= projectionMatrix * modelViewMatrix * vec4(position, 1.0);',
+            '}'
+
+        ].join('\n');
+
+
+        var sphere =  new THREE.SphereBufferGeometry( 6, 32, 32 );
+        material	= new THREE.ShaderMaterial({
+            uniforms: {
+                coeficient	: {
+                    type	: "f",
+                    value	: 1.0
+                },
+                power		: {
+                    type	: "f",
+                    value	: 2
+                },
+                glowColor	: {
+                    type	: "c",
+                    value	: new THREE.Color('blue')
+                }
+            },
+            vertexShader	: vertexShader,
+            fragmentShader	: fragmentShader1,
+            blending	: THREE.NormalBlending,
+            transparent	: true
+
+        });
+        mesh = new THREE.Mesh(sphere, material);
+
+
+        scene.add(mesh);
+    }
+
+
+    function animate() {
+
+        requestAnimationFrame( animate );
+        camera.lookAt( scene.position );
+        renderer.render( scene, camera );
+        controls.update();
+    }
+
+
+
+</script>
+</body>
+</html>
