@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="../js/three.min.js"></script>
+    <script src="../js/OrbitControls.js"></script>
+
+    <script src="../js/Init.js"></script>
+    <script src="../js/tween.min.js"></script>
+
+    <style>
+        #box{
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+    </style>
+
+</head>
+<body>
+<div class="ys-absolute-container" id="box" style="overflow: hidden"></div>
+<script>
+    let el=document.getElementById('box')
+    let app=new THREE.inithree(el,{
+
+    })
+    let scene=app.scene
+    let renderer=app.renderer
+    let camera=app.camera
+    let controls=app.controls
+
+
+
+
+    camera.position.set(50, 50, 50)
+    camera.lookAt(new THREE.Vector3(0, 0, 0))
+
+    renderer.setPixelRatio( window.devicePixelRatio )
+    renderer.shadowMap.enabled = true
+
+
+
+    //add light
+    const directionalLight = new THREE.DirectionalLight( '#fff' )
+    directionalLight.position.set( 30, 30, 30 ).normalize()
+    scene.add( directionalLight )
+    directionalLight.castShadow = true
+
+    const ambientLight = new THREE.AmbientLight('#ffffff',0.3) // obj 唯一 id
+    scene.add(ambientLight)
+
+
+    /** add home */
+
+    let loader=new THREE.TextureLoader()
+    let data=[   'mobile_r.jpg',//右(-1,0,0)
+        'mobile_l.jpg',//左(1,0,0)
+        'mobile_u.jpg',//上(0,1,0)
+        'mobile_d.jpg',//下(0,-1,0)
+        'mobile_f.jpg',//前(0,0,1)
+        'mobile_b.jpg'//后(0,0,-1)
+    ]
+   let mat=[]
+    data.map(v => {
+        loader.load('../images/all/'+v, textureNormal => {
+            textureNormal.needsUpdate = true
+            mat.push(  new THREE.MeshStandardMaterial({
+                map: textureNormal,
+                side:THREE.DoubleSide}))})})
+    function animate() {
+        if(mat.length==6){
+            const home = new THREE.Mesh(new THREE.BoxBufferGeometry(1000,1000,1000),
+                mat
+            )
+             home.scale.x=-1
+            home.position.set(0,50,0)
+            scene.add(home)
+            mat.push(1)
+        }
+        controls.update()
+        TWEEN.update()
+        renderer.render(scene, camera)
+        requestAnimationFrame(animate)
+    }
+
+    animate()
+
+
+</script>
+
+</body>
+</html>

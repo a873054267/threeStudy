@@ -148,7 +148,8 @@
     //动画、鼠标交互用animate更容易实现
    function animate() {
        controls.update()
-        gp.rotation.y+=0.01
+        // gp.rotation.y+=0.01
+       circle.material.map.rotation+=0.01
        renderer.render(scene, camera)
        requestAnimationFrame(animate)
    }

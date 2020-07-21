@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <title>three.js css3d - panorama</title>
+    <style>
+        body {
+            background-color: #000000;
+            margin: 0;
+            cursor: move;
+            overflow: hidden;
+        }
+
+        a {
+            color: #ffffff;
+        }
+
+        #box{
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+    </style>
+</head>
+<body>
+<div class="ys-absolute-container" id="box" style="overflow: hidden"></div>
+
+<script src="../js/three.min.js"></script>
+<script src="../js/CSS3DRenderer.js"></script> <!-- 此处引入CSS3Drenderer.js类 -->
+<script src="../js/OrbitControls.js"></script>
+<script src="../js/Init.js"></script>
+<!-- 以上两个文件，在下载threejs的时候就有的，引入就好 -->
+<script>
+
+    var camera, scene, renderer;
+
+    /* 相机聚焦点 */
+    var target = new THREE.Vector3();
+
+    /* lon:经度， lat:维度  经纬度是相机的聚焦点 */
+    var lon = 90, lat = 0;
+
+    /* 相机聚焦点，弧度制 */
+    var phi = 0, theta = 0;
+
+    /* 移动端输入的x,y */
+    var touchX, touchY;
+
+    /* 图片路径 */
+    var src = '../images/all/';
+
+
+
+
+    init();
+    animate();
+
+    function init() {
+
+       let width=1024 //图片宽度
+        camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 1000);
+
+        scene = new THREE.Scene();
+
+        /* 图片格式 */
+        let format = '.jpg';
+
+        /* 以下六个面 拼接成立方体 */
+        var sides = [
+            {
+                url: '../images/all/主卧_r.jpg',
+                position: [-width / 2, 0, 0], /* 左 */
+                rotation: [0, Math.PI / 2, 0]
+            },
+            {
+                url:  '../images/all/主卧_l.jpg',
+                position: [width / 2, 0, 0], /* 右 */
+                rotation: [0, -Math.PI / 2, 0]
+            },
+            {
+                url:  '../images/all/主卧_u.jpg',
+                position: [0, width / 2, 0], /* 上 */
+                rotation: [-Math.PI / 2, 0, Math.PI]
+            },
+            {
+                url:  '../images/all/主卧_d.jpg',
+                position: [0, -width / 2, 0], /* 下 */
+                rotation: [-Math.PI / 2, 0, Math.PI]
+            },
+            {
+                url:  '../images/all/主卧_b.jpg',
+                position: [0, 0, width / 2], /* 后 */
+                rotation: [0, Math.PI, 0]
+            },
+            {
+                url: '../images/all/主卧_f.jpg',
+                position: [0, 0, -width / 2], /* 前 */
+                rotation: [0, 0, 0]
+            }
+        ];
+
+        for (var i = 0; i < sides.length; i++) {
+
+            var side = sides[i];
+
+            var element = document.createElement('img');
+
+            element.width = width + 6;
+            element.src = side.url;
+
+            var css3Loader = new THREE.CSS3DObject(element);
+            css3Loader.position.fromArray(side.position);
+            css3Loader.rotation.fromArray(side.rotation);
+
+            scene.add(css3Loader);
+
+        }
+
+        renderer = new THREE.CSS3DRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+
+        document.addEventListener('mousedown', onDocumentMouseDown, false);
+        document.addEventListener('wheel', onDocumentMouseWheel, false);
+
+        document.addEventListener('touchstart', onDocumentTouchStart, false);
+        document.addEventListener('touchmove', onDocumentTouchMove, false);
+
+        window.addEventListener('resize', onWindowResize, false);
+
+    }
+
+    function onWindowResize() {
+
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+
+        renderer.setSize(window.innerWidth, window.innerHeight);
+
+    }
+
+    function onDocumentMouseDown(event) {
+
+        event.preventDefault();
+
+        document.body.style.cursor = 'move';
+
+        document.addEventListener('mousemove', onDocumentMouseMove, false);
+        document.addEventListener('mouseup', onDocumentMouseUp, false);
+
+    }
+
+    function onDocumentMouseMove(event) {
+
+        var movementX = event.movementX || event.mozMovementX || event.webkitMovementX || 0;
+        var movementY = event.movementY || event.mozMovementY || event.webkitMovementY || 0;
+
+        /* 拖动速度随相机视角的变动而变动 */
+        var speed = camera.fov * 0.0015;
+
+        /* 经纬度平移速度 */
+        lon -= movementX * speed;
+        lat += movementY * speed;
+
+
+    }
+
+    function onDocumentMouseUp(event) {
+
+        event.preventDefault();
+
+        document.body.style.cursor = 'auto';
+
+        document.removeEventListener('mousemove', onDocumentMouseMove);
+        document.removeEventListener('mouseup', onDocumentMouseUp);
+
+    }
+
+    function onDocumentMouseWheel(event) {
+
+        /* 缩放速度 */
+        var speed = 0.008;
+
+        var fov = camera.fov + event.deltaY * speed;
+
+        /* 角度缩放最值 */
+        camera.fov = THREE.Math.clamp(fov, 45, 95);
+
+        camera.updateProjectionMatrix();
+
+    }
+
+    function onDocumentTouchStart(event) {
+
+        event.preventDefault();
+
+        var touch = event.touches[0];
+
+        touchX = touch.screenX;
+        touchY = touch.screenY;
+
+    }
+
+    function onDocumentTouchMove(event) {
+
+        event.preventDefault();
+
+        var touch = event.touches[0];
+
+        lon -= (touch.screenX - touchX) * 0.1;
+        lat += (touch.screenY - touchY) * 0.1;
+
+        touchX = touch.screenX;
+        touchY = touch.screenY;
+
+    }
+
+    function animate() {
+        requestAnimationFrame(animate);
+        lat = Math.max(-85, Math.min(85, lat));
+        phi = THREE.Math.degToRad(90 - lat);
+        theta = THREE.Math.degToRad(lon);
+        target.x = Math.sin(phi) * Math.cos(theta);
+        target.y = Math.cos(phi);
+        target.z = Math.sin(phi) * Math.sin(theta);
+        camera.lookAt(target);
+
+        renderer.render(scene, camera);
+
+    }
+
+</script>
+</body>
+</html>
