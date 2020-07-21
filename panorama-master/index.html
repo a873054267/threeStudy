@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js canvas - panorama demo</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				background-color: rgb(200,200,200);
+				margin: 0px;
+				overflow: hidden;
+			}
+		</style>
+	</head>
+	<body>
+
+		<div id="container"></div>
+
+		<script src="js/three.js"></script>
+		<script src="js/panorama.js"></script>
+
+		<script>
+
+				var textures = [
+
+					'/threeStudy/images/all/主卧_r.jpg', // right
+					'/threeStudy/images/all/主卧_l.jpg', // left
+					'/threeStudy/images/all/主卧_u.jpg', // top
+					'/threeStudy/images/all/主卧_d.jpg', // bottom
+					'/threeStudy/images/all/主卧_b.jpg', // back
+					'/threeStudy/images/all/主卧_f.jpg'  // front
+
+				];
+
+				var panorama = new Panorama({textures:textures});
+		</script>
+	</body>
+</html>

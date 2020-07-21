@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="../js/three.min.js"></script>
+    <script src="../js/OrbitControls.js"></script>
+    <script src="../js/Init.js"></script>
+    <script src="../js/loaders/GLTFLoader.js"></script>
+    <script src="../js/loaders/DRACOLoader.js"></script>
+    <style>
+        #box{
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+    </style>
+
+</head>
+<body>
+<div class="ys-absolute-container" id="box" style="overflow: hidden"></div>
+<script>
+   let el=document.getElementById('box')
+    let app=new THREE.inithree(el,{
+        axes:true,
+    })
+    let scene=app.scene
+    let renderer=app.renderer
+    let camera=app.camera
+    let controls=app.controls
+
+
+    camera.position.set(50, 50, 50)
+    camera.lookAt(new THREE.Vector3(0, 0, 0))
+
+
+   let  car
+   let carParts = {
+       body: [],
+       rims:[],
+       glass: [],
+   };
+   let loader = new THREE.GLTFLoader()
+   const dracoLoader = new THREE.DRACOLoader()
+   const wheels = []
+   dracoLoader.setDecoderPath( '../js/loaders/draco/' );
+   loader.setDRACOLoader( dracoLoader )
+   loader.load("../models/glb/ferrari.glb",function (glb) {
+       car = glb.scene
+       car.position.set(0,0,0)
+       car.scale.set(20,20,20)
+       scene.add( car )
+       window.car=car
+
+       // car parts for material selection
+       carParts.body.push( car.getObjectByName( 'body' ))
+       carParts.glass.push(car.getObjectByName( 'glass' ))
+       wheels.push(
+           car.getObjectByName( 'wheel_fl' ),
+           car.getObjectByName( 'wheel_fr' ),
+           car.getObjectByName( 'wheel_rl' ),
+           car.getObjectByName( 'wheel_rr' )
+       );
+       carParts.glass[0].material = new THREE.MeshStandardMaterial( { color: 'red',metalness: 1, roughness: 0, opacity: 0.8, transparent: true, premultipliedAlpha: true, name: 'red' } )
+
+
+   })
+
+
+   /**
+    * 环境贴图
+    * 本例使用 scene全景图 CubeTextureLoader加载六个方向图片
+    * */
+   const texture  = new THREE.CubeTextureLoader()
+       .setPath( '../images/all/' )
+       .load( [
+           'RT.jpg',//右(-1,0,0)
+           'LF.jpg',//左(1,0,0)
+           'UP.jpg',//上(0,1,0)
+           'DN.jpg',//下(0,-1,0)
+           'FR.jpg',//前(0,0,1)
+           'BK.jpg'//后(0,0,-1)
+       ] );
+   scene.background = texture
+   //相机
+   scene.remove(camera) //移出透视相机 添加全景相机
+   const cubeCamera = new THREE.CubeCamera(0.1, 10000, 1080);
+   scene.add(cubeCamera);
+
+   //平面
+   loader =new THREE.TextureLoader()
+   loader.load('../images/all/bottom.jpg',texture => {
+       const planeGeometry = new THREE.PlaneGeometry(15000, 15000);
+       texture.wrapS = THREE.RepeatWrapping;
+       texture.wrapT = THREE.RepeatWrapping;
+       texture.repeat.set( 60, 60 );
+       const planeMaterial = new THREE.MeshStandardMaterial({
+           map:texture
+
+       });
+       const plane = new THREE.Mesh(planeGeometry, planeMaterial);
+       //水平面旋转并且设置位置
+       plane.rotation.x = -0.5 * Math.PI;
+       plane.position.set(0,0,0)
+       scene.add(plane);
+   })
+   const directionalLight = new THREE.DirectionalLight( '#fff' )
+   directionalLight.position.set( 30, 30, 30 ).normalize()
+   scene.add( directionalLight )
+   const ambientLight = new THREE.AmbientLight('#fff',0.3) // obj 唯一 id
+   scene.add(ambientLight)
+    window.car=car
+    var baseX=0
+   var baseY=0
+   el.onkeydown=(e)=>{
+       //37为左键
+              if(e.which==65){
+                //左
+                  if(baseX<=10){
+                      baseX+=0.1
+                  }
+              }else if(e.which==87){
+               //上
+                  if(baseY<=10){
+                      baseY+=0.1
+                  }
+                  console.log(baseX)
+              }else if(e.which==68){
+                  //右
+                  if(baseY>=-10){
+                      baseX-=0.1
+                  }
+
+              }else if(e.which==83){
+               // 下
+                  if(baseY>=-10){
+                      baseY-=0.1
+                  }
+              }
+              e.stopPropagation()
+
+   }
+   function animate() {
+       //controls.update()
+       wheels.forEach(e =>{
+           e.rotateX( (baseY ||0.2)*-0.05)
+       })
+      if(car  ){
+
+           if(baseY || baseX){
+                car.position.z=car.position.z-(baseY|| 0)
+               car.position.x=car.position.x-(baseX || 0)
+               window.camera=camera
+
+           }
+           else{
+           }
+          camera.lookAt(car.position)
+          camera.position.x=car.position.x+60
+          camera.position.z=car.position.z+90
+
+
+      }
+       renderer.render(scene, camera)
+       requestAnimationFrame(animate)
+   }
+
+   animate()
+
+
+</script>
+
+</body>
+</html>

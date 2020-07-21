@@ -48,14 +48,14 @@
     * 本例使用 scene全景图 CubeTextureLoader加载六个方向图片
     * */
    const texture  = new THREE.CubeTextureLoader()
-       .setPath( '../images/' )
+       .setPath( '../images/all/' )
        .load( [
-           'px.jpg',//右(-1,0,0)
-           'nx.jpg',//左(1,0,0)
-           'py.jpg',//上(0,1,0)
-           'ny.jpg',//下(0,-1,0)
-           'pz.jpg',//前(0,0,1)
-           'nz.jpg'//后(0,0,-1)
+           '儿童房_r.jpg',//右(-1,0,0)
+           '儿童房_l.jpg',//左(1,0,0)
+           '儿童房_u.jpg',//上(0,1,0)
+           '儿童房_d.jpg',//下(0,-1,0)
+           '儿童房_b.jpg',//前(0,0,1)
+           '儿童房_f.jpg'//后(0,0,-1)
        ] );
    texture.format = THREE.RGBFormat;
    texture.mapping = THREE.CubeReflectionMapping;
